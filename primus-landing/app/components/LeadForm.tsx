@@ -27,8 +27,9 @@ export default function LeadForm() {
     setErrorMessage("");
 
     try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.primushomepro.com";
       const response = await fetch(
-        "https://primus-insights-roofing.onrender.com/lead",
+        `${API_URL}/lead`,
         {
           method: "POST",
           headers: {
