@@ -1,6 +1,5 @@
 const express = require('express');
 const twilio = require('twilio');
-const { OpenAI } = require('openai');
 require('dotenv').config();
 
 const app = express();
@@ -8,7 +7,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const leadStore = [];
 
