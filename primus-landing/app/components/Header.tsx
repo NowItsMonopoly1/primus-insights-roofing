@@ -10,11 +10,11 @@ export default function Header() {
           {/* Left: Logo */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-              <span className="text-emerald-400 font-bold text-lg">PI</span>
+              <span className="text-emerald-400 font-bold text-lg">PH</span>
             </div>
             <div>
               <h1 className="text-lg font-semibold text-slate-100 tracking-tight">
-                Primus Insights Roofing
+                Primus Home Pro
               </h1>
               <p className="text-xs text-slate-500 font-mono">v1.0</p>
             </div>
