@@ -1,9 +1,8 @@
 import express from "express";
-import bodyParser from "body-parser";
 import twilio from "twilio";
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
@@ -18,26 +17,33 @@ async function getAIResponse(message) {
 // In-memory leads
 let leads = [];
 
-// Lead intake
+// --- SAFE LEAD ENDPOINT (no authentication required) ---
 app.post("/lead", async (req, res) => {
   try {
-    const { phone, name, message } = req.body;
-    const leadId = leads.length;
+    const { phone, name, message } = req.body || {};
 
-    leads.push({ phone, name, message });
+    console.log("🔥 Incoming lead:", req.body);
 
-    const aiMessage = await getAIResponse(message);
+    if (!phone) {
+      return res.status(400).json({ error: "Missing phone" });
+    }
 
+    // Mock AI response (no OpenAI used)
+    const aiReply =
+      `Thanks ${name || "there"}! We received your message: "${message}". ` +
+      `A roofing specialist will reach out shortly.`;
+
+    // Send SMS via Twilio
     await client.messages.create({
-      body: aiMessage,
+      body: aiReply,
       from: process.env.TWILIO_PHONE,
-      to: phone
+      to: phone,
     });
 
-    res.json({ status: "ok", leadId });
+    return res.json({ status: "ok", leadId: 0 });
   } catch (err) {
-    console.error("Error in /lead:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Lead error:", err);
+    return res.status(500).json({ error: "Server error", details: err.message });
   }
 });
 
