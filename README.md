@@ -1,6 +1,6 @@
-# PrimusInsights Roofing - Lead Funnel Backend
+# Primus Home Pro - Lead Funnel Backend
 
-Production-ready AI-powered lead capture and SMS follow-up system for roofing companies.
+Primus Home Pro - AI-powered lead capture and SMS follow-up system for home improvement companies.
 
 ## ⭐ New: Security & Database Upgrade!
 
