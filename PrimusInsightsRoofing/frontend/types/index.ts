@@ -52,6 +52,10 @@ export type LeadEventType =
   | 'AI_DRAFT'
   | 'FORM_SUBMIT'
   | 'SOLAR_ANALYSIS'
+  | 'PROPOSAL_GENERATED'
+  | 'PROPOSAL_SENT'
+  | 'PROPOSAL_VIEWED'
+  | 'PROPOSAL_ACCEPTED'
 
 // Lead Stages
 export type LeadStage = 'New' | 'Contacted' | 'Qualified' | 'Closed' | 'Lost'

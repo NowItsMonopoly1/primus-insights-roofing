@@ -51,6 +51,7 @@ model Lead {
   
   // Relations
   siteSurvey  SiteSurvey?
+  proposals   Proposal[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   User        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -125,6 +126,63 @@ model LeadEvent {
   @@index([createdAt])
   @@index([leadId])
   @@index([type])
+}
+
+// ============================================================================
+// PROPOSAL - Financial Proposals for Solar Installations
+// ============================================================================
+
+model Proposal {
+  id        String   @id @default(cuid())
+  leadId    String
+  
+  // System Specifications
+  systemSizeWatts       Int       // Total system size in watts
+  systemSizeKW          Float     // Total system size in kW
+  panelCount            Int       // Number of panels
+  panelWattage          Int       @default(400) // Individual panel wattage
+  
+  // Production Estimates
+  annualProductionKWh   Float     // Year 1 estimated production
+  lifetimeProductionKWh Float     // 25-year total production
+  
+  // Cost Breakdown
+  grossSystemCost       Float     // Before incentives
+  federalITC            Float     // Federal Investment Tax Credit amount
+  stateRebate           Float     @default(0) // State/local rebates
+  priceAfterITC         Float     // Final price after incentives
+  costPerWatt           Float     // $/W after incentives
+  
+  // Savings Projections
+  year1Savings          Float     // First year savings
+  netSavings25Yr        Float     // Total net savings over 25 years
+  breakEvenYear         Int?      // Year when system pays for itself
+  
+  // Financial Scenarios (JSON for flexibility)
+  cashScenario          Json      // Cash purchase details
+  loan10YearScenario    Json      // 10-year loan details
+  loan15YearScenario    Json      // 15-year loan details
+  ppaScenario           Json      // Power Purchase Agreement details
+  recommendedOption     String    // CASH, LOAN_10, LOAN_15, or PPA
+  
+  // Assumptions Used
+  utilityRate           Float     // $/kWh used for calculations
+  utilityEscalation     Float     // Annual rate escalation %
+  panelEfficiency       Float     // Panel efficiency %
+  degradationRate       Float     // Annual degradation %
+  
+  // Metadata
+  stateCode             String?   // State for utility rate lookup
+  generatedAt           DateTime  @default(now())
+  expiresAt             DateTime? // When proposal expires
+  status                String    @default("draft") // draft, sent, viewed, accepted, expired
+  
+  // Relations
+  Lead                  Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  @@index([leadId])
+  @@index([status])
+  @@index([generatedAt])
 }
 
 model User {
