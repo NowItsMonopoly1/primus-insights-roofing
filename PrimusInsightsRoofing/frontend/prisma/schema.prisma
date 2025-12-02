@@ -177,12 +177,24 @@ model Proposal {
   expiresAt             DateTime? // When proposal expires
   status                String    @default("draft") // draft, sent, viewed, accepted, expired
   
+  // Secure Public Access Token
+  accessToken           String    @unique @default(cuid()) // Secure token for public viewing
+  
+  // E-Signature & Acceptance
+  signedAt              DateTime? // When proposal was signed
+  signatureImage        String?   @db.Text // Base64 encoded signature image
+  selectedScenario      String?   // Which scenario was selected (CASH, LOAN_10, LOAN_15, PPA)
+  customerName          String?   // Name of person who signed
+  customerEmail         String?   // Email for contract delivery
+  ipAddress             String?   // IP address at signing (for audit)
+  
   // Relations
   Lead                  Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
   
   @@index([leadId])
   @@index([status])
   @@index([generatedAt])
+  @@index([accessToken])
 }
 
 model User {
