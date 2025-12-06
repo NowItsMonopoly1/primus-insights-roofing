@@ -69,15 +69,15 @@ const LeadBoard: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in relative">
-      <div className="flex justify-between items-end">
+    <div className="space-y-4 md:space-y-6 animate-fade-in relative">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
         <div>
-          <h2 className="text-3xl font-display font-bold text-slate-100">Lead Board</h2>
-          <p className="text-slate-400 mt-1">Manage and track your solar sales pipeline.</p>
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100">Lead Board</h2>
+          <p className="text-slate-400 mt-1 text-sm md:text-base">Manage and track your solar sales pipeline.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-solar-orange hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-bold transition-all shadow-lg shadow-orange-500/20 text-sm cursor-pointer hover:scale-105 active:scale-95"
+          className="bg-solar-orange hover:bg-orange-600 text-white px-4 md:px-5 py-2 md:py-2.5 rounded-lg flex items-center gap-2 font-bold transition-all shadow-lg shadow-orange-500/20 text-sm cursor-pointer hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
         >
           <Plus size={18} /> New Lead
         </button>
@@ -85,19 +85,19 @@ const LeadBoard: React.FC = () => {
 
       <div className="glass-panel rounded-xl overflow-hidden border border-slate-800">
         {/* Toolbar */}
-        <div className="p-4 border-b border-slate-800 flex gap-4 bg-slate-900/50">
-          <div className="relative flex-1 max-w-md">
+        <div className="p-3 md:p-4 border-b border-slate-800 flex flex-col sm:flex-row gap-3 md:gap-4 bg-slate-900/50">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
             <input 
               type="text"
-              placeholder="Search homeowners or addresses..."
+              placeholder="Search homeowners..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all placeholder:text-slate-600"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter size={16} className="text-slate-500" />
+            <Filter size={16} className="text-slate-500 hidden sm:block" />
             <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
