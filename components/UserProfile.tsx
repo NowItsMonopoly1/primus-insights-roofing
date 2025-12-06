@@ -40,23 +40,23 @@ export const UserProfileView: React.FC<UserProfileProps> = ({ profile, onUpdate 
   const selectedAvatar = AVATAR_OPTIONS.find(a => a.id === formData.avatarId);
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
-      <div className="flex justify-between items-end">
+    <div className="space-y-4 md:space-y-6 animate-fade-in max-w-4xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
         <div>
-          <h2 className="text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
              <User className="text-solar-orange" />
              My Profile
           </h2>
-          <p className="text-slate-400 mt-1">Manage your account settings and preferences.</p>
+          <p className="text-slate-400 mt-1 text-sm md:text-base">Manage your account settings and preferences.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
         
         {/* Left Column: Avatar & Summary */}
-        <div className="glass-panel p-6 border border-slate-800 flex flex-col items-center text-center">
+        <div className="glass-panel p-4 md:p-6 border border-slate-800 flex flex-col items-center text-center">
             <div className="relative group cursor-pointer mb-4">
-                <div className={`w-32 h-32 rounded-full border-4 border-slate-700 flex items-center justify-center text-3xl font-bold text-slate-400 overflow-hidden group-hover:border-solar-orange transition-colors shadow-2xl ${selectedAvatar ? selectedAvatar.gradient : 'bg-slate-800'}`}>
+                <div className={`w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-slate-700 flex items-center justify-center text-2xl md:text-3xl font-bold text-slate-400 overflow-hidden group-hover:border-solar-orange transition-colors shadow-2xl ${selectedAvatar ? selectedAvatar.gradient : 'bg-slate-800'}`}>
                     {selectedAvatar ? (
                       <span className="text-white drop-shadow-md">{getInitials(formData.name)}</span>
                     ) : (
@@ -84,8 +84,8 @@ export const UserProfileView: React.FC<UserProfileProps> = ({ profile, onUpdate 
         </div>
 
         {/* Right Column: Edit Form */}
-        <div className="md:col-span-2 glass-panel p-8 border border-slate-800">
-            <h3 className="text-lg font-bold text-slate-200 mb-6 border-b border-slate-800 pb-4">Edit Details</h3>
+        <div className="md:col-span-2 glass-panel p-4 md:p-8 border border-slate-800">
+            <h3 className="text-base md:text-lg font-bold text-slate-200 mb-4 md:mb-6 border-b border-slate-800 pb-4">Edit Details</h3>
             
             <form onSubmit={handleSubmit} className="space-y-6">
                 

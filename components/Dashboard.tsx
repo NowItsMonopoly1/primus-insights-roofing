@@ -88,12 +88,12 @@ const Dashboard: React.FC = () => {
         <StatCard title="Pipeline" value={totalLeads.toString()} subtext={`+${activeProjects} active projects`} icon={Briefcase} color="text-purple-400" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Main Chart */}
-          <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-                    <TrendingUp size={18} className="text-solar-orange"/> Commission Trajectory
+          <div className="lg:col-span-2 glass-panel p-4 md:p-6 rounded-2xl border border-slate-800">
+            <div className="flex justify-between items-center mb-4 md:mb-6">
+                <h3 className="text-base md:text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <TrendingUp size={16} className="text-solar-orange md:w-[18px] md:h-[18px]"/> Commission Trajectory
                 </h3>
             </div>
             <div style={{ width: '100%', height: 'auto', minWidth: 0 }} className="h-48 md:h-80">
@@ -138,10 +138,10 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* AI Insights Panel */}
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-                    <Sparkles size={18} className="text-blue-400"/> Strategic Briefing
+          <div className="glass-panel p-4 md:p-6 rounded-2xl border border-slate-800 flex flex-col">
+              <div className="flex justify-between items-center mb-4 md:mb-6">
+                <h3 className="text-base md:text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <Sparkles size={16} className="text-blue-400 md:w-[18px] md:h-[18px]"/> Strategic Briefing
                 </h3>
               </div>
               
