@@ -1,18 +1,28 @@
 
 import React from 'react';
-import { Search, Bell, Wifi, HelpCircle } from 'lucide-react';
+import { Search, Bell, Wifi, HelpCircle, Menu } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface HeaderProps {
   title: string;
   userProfile: UserProfile;
+  setSidebarOpen?: (open: boolean) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, userProfile }) => {
+const Header: React.FC<HeaderProps> = ({ title, userProfile, setSidebarOpen }) => {
   return (
-    <header className="h-16 border-b border-slate-800 bg-slate-950/50 backdrop-blur-md sticky top-0 z-10 px-8 flex items-center justify-between">
-      {/* Left: Breadcrumb / Title Context */}
-      <div className="flex items-center gap-4">
+    <header className="h-16 border-b border-slate-800 bg-slate-950/50 backdrop-blur-md sticky top-0 z-10 px-4 md:px-8 flex items-center justify-between">
+      {/* Left: Hamburger + Breadcrumb */}
+      <div className="flex items-center gap-3">
+        {/* Mobile Hamburger */}
+        {setSidebarOpen && (
+          <button 
+            onClick={() => setSidebarOpen(true)}
+            className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <Menu size={20} />
+          </button>
+        )}
         <h2 className="text-slate-200 font-display font-medium text-sm tracking-wide">
           <span className="hidden md:inline">PRIMUS HOME PRO</span>
           <span className="md:hidden">PHP</span>

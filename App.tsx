@@ -22,6 +22,7 @@ const DEFAULT_PROFILE: UserProfile = {
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const [userProfile, setUserProfile] = useState<UserProfile>(() => 
     loadOrDefault<UserProfile>(USER_PROFILE_KEY, DEFAULT_PROFILE)
@@ -57,14 +58,28 @@ const App: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-solar-orange selection:text-white overflow-hidden">
-      {/* Left Sidebar - Fixed */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} userProfile={userProfile} />
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Left Sidebar - Responsive */}
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={(tab) => { setActiveTab(tab); setSidebarOpen(false); }} 
+        userProfile={userProfile}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
       
       {/* Main Content Area - Scrollable */}
-      <div className="flex-1 ml-64 flex flex-col h-screen relative">
+      <div className="flex-1 md:ml-64 flex flex-col h-screen relative">
         
         {/* Top Header - Sticky */}
-        <Header title={getPageTitle()} userProfile={userProfile} />
+        <Header title={getPageTitle()} userProfile={userProfile} setSidebarOpen={setSidebarOpen} />
 
         {/* Ambient Background - Toned down for professional look */}
         <div className="fixed inset-0 pointer-events-none z-0">
@@ -73,7 +88,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Scrollable Content Container */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-8 relative z-10 scroll-smooth">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 relative z-10 scroll-smooth">
           <div className="max-w-7xl mx-auto pb-10">
             {renderContent()}
           </div>

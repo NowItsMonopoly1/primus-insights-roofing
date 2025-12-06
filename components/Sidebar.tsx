@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Sun, DollarSign, Settings, Zap, Briefcase, HardHat, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Sun, DollarSign, Settings, Zap, Briefcase, HardHat, ChevronRight, X } from 'lucide-react';
 import { UserProfile } from '../types';
 import { AVATAR_OPTIONS } from '../constants';
 
@@ -8,9 +8,11 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   userProfile: UserProfile;
+  sidebarOpen?: boolean;
+  setSidebarOpen?: (open: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile, sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'leads', label: 'Lead Board', icon: Briefcase },
@@ -31,7 +33,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile 
   const selectedAvatar = AVATAR_OPTIONS.find(a => a.id === userProfile.avatarId);
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar fixed z-40 h-full transition-transform duration-300 md:translate-x-0 md:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* Mobile Close Button */}
+      {setSidebarOpen && (
+        <button 
+          onClick={() => setSidebarOpen(false)}
+          className="md:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+        >
+          <X size={20} />
+        </button>
+      )}
+
       {/* Brand Header */}
       <div className="sidebar-logo">
         <div className="sidebar-orb">
