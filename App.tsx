@@ -88,8 +88,8 @@ const App: React.FC = () => {
         </div>
 
         {/* Scrollable Content Container */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 relative z-10 scroll-smooth w-full">
-          <div className="max-w-7xl mx-auto pb-10 w-full overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 relative z-10 scroll-smooth w-full">
+          <div className="max-w-6xl pb-10 w-full overflow-x-hidden">
             {renderContent()}
           </div>
         </main>
