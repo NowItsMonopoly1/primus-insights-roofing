@@ -37,43 +37,43 @@ export const CommissionLog = () => {
     leads.find((l) => l.id === leadId)?.name ?? leadId;
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in overflow-x-hidden w-full">
+    <div className="space-y-6 animate-fade-in overflow-x-hidden w-full">
        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
         <div>
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
+          <h2 className="text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
              <DollarSign className="text-emerald-500" />
              Commission Log
           </h2>
-          <p className="text-slate-400 mt-1 text-sm md:text-base">Track your earnings and payout schedules.</p>
+          <p className="text-slate-400 mt-1">Track your earnings and payout schedules.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-         <div className="glass-panel p-3 md:p-4 flex items-center gap-3 md:gap-4 border border-slate-800">
-             <div className="p-2 md:p-3 rounded-full bg-yellow-500/10 text-yellow-500">
-                 <CalendarClock size={20} className="md:w-6 md:h-6" />
+      <div className="grid grid-cols-3 gap-4">
+         <div className="glass-panel p-4 flex items-center gap-4 border border-slate-800">
+             <div className="p-3 rounded-full bg-yellow-500/10 text-yellow-500">
+                 <CalendarClock size={24} />
              </div>
              <div>
-                 <p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold">Pending</p>
-                 <p className="text-lg md:text-2xl font-mono font-bold text-slate-200">${totals.pending.toLocaleString()}</p>
+                 <p className="text-xs text-slate-500 uppercase font-bold">Pending</p>
+                 <p className="text-2xl font-mono font-bold text-slate-200">${totals.pending.toLocaleString()}</p>
              </div>
          </div>
-         <div className="glass-panel p-3 md:p-4 flex items-center gap-3 md:gap-4 border border-slate-800">
-             <div className="p-2 md:p-3 rounded-full bg-emerald-500/10 text-emerald-500">
-                 <Wallet size={20} className="md:w-6 md:h-6" />
+         <div className="glass-panel p-4 flex items-center gap-4 border border-slate-800">
+             <div className="p-3 rounded-full bg-emerald-500/10 text-emerald-500">
+                 <Wallet size={24} />
              </div>
              <div>
-                 <p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold">Paid</p>
-                 <p className="text-lg md:text-2xl font-mono font-bold text-slate-200">${totals.paid.toLocaleString()}</p>
+                 <p className="text-xs text-slate-500 uppercase font-bold">Paid</p>
+                 <p className="text-2xl font-mono font-bold text-slate-200">${totals.paid.toLocaleString()}</p>
              </div>
          </div>
-         <div className="glass-panel p-3 md:p-4 flex items-center gap-3 md:gap-4 border border-slate-800">
-             <div className="p-2 md:p-3 rounded-full bg-blue-500/10 text-blue-500">
-                 <DollarSign size={20} className="md:w-6 md:h-6" />
+         <div className="glass-panel p-4 flex items-center gap-4 border border-slate-800">
+             <div className="p-3 rounded-full bg-blue-500/10 text-blue-500">
+                 <DollarSign size={24} />
              </div>
              <div>
-                 <p className="text-[10px] md:text-xs text-slate-500 uppercase font-bold">Lifetime</p>
-                 <p className="text-lg md:text-2xl font-mono font-bold text-slate-200">${totals.total.toLocaleString()}</p>
+                 <p className="text-xs text-slate-500 uppercase font-bold">Lifetime</p>
+                 <p className="text-2xl font-mono font-bold text-slate-200">${totals.total.toLocaleString()}</p>
              </div>
          </div>
       </div>

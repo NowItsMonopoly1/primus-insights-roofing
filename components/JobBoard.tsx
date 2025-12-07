@@ -69,15 +69,15 @@ const LeadBoard: React.FC = () => {
   });
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in relative overflow-x-hidden w-full">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
+    <div className="space-y-6 animate-fade-in relative overflow-x-hidden w-full">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-3">
         <div>
           <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100">Lead Board</h2>
-          <p className="text-slate-400 mt-1 text-sm md:text-base">Manage and track your solar sales pipeline.</p>
+          <p className="text-slate-400 mt-1">Manage and track your solar sales pipeline.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-solar-orange hover:bg-orange-600 text-white px-4 md:px-5 py-2 md:py-2.5 rounded-lg flex items-center gap-2 font-bold transition-all shadow-lg shadow-orange-500/20 text-sm cursor-pointer hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+          className="bg-solar-orange hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-bold transition-all shadow-lg shadow-orange-500/20 text-sm cursor-pointer hover:scale-105 active:scale-95 w-full md:w-auto justify-center"
         >
           <Plus size={18} /> New Lead
         </button>
@@ -85,19 +85,19 @@ const LeadBoard: React.FC = () => {
 
       <div className="glass-panel rounded-xl overflow-hidden border border-slate-800">
         {/* Toolbar */}
-        <div className="p-3 md:p-4 border-b border-slate-800 flex flex-col sm:flex-row gap-3 md:gap-4 bg-slate-900/50">
-          <div className="relative flex-1">
+        <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 bg-slate-900/50">
+          <div className="relative flex-1 md:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
             <input 
               type="text"
-              placeholder="Search homeowners..."
+              placeholder="Search homeowners or addresses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all placeholder:text-slate-600"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter size={16} className="text-slate-500 hidden sm:block" />
+            <Filter size={16} className="text-slate-500" />
             <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
@@ -114,25 +114,25 @@ const LeadBoard: React.FC = () => {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto min-h-[300px] md:min-h-[400px]">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left text-sm min-w-[600px]">
-            <thead className="bg-slate-900/80 text-slate-400 font-medium uppercase text-[10px] md:text-xs tracking-wider">
+            <thead className="bg-slate-900/80 text-slate-400 font-medium uppercase text-xs tracking-wider">
               <tr>
-                <th className="px-3 md:px-6 py-3 md:py-4">Homeowner</th>
-                <th className="px-3 md:px-6 py-3 md:py-4">Lead IQ</th>
-                <th className="px-3 md:px-6 py-3 md:py-4">Status</th>
-                <th className="px-3 md:px-6 py-3 md:py-4">Bill</th>
-                <th className="px-3 md:px-6 py-3 md:py-4 text-right">Actions</th>
+                <th className="px-6 py-4">Homeowner</th>
+                <th className="px-6 py-4">Lead IQ (AI)</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Est. Bill</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {filteredLeads.map((lead) => {
                 return (
                   <tr key={lead.id} className="hover:bg-slate-800/50 transition-colors group">
-                    <td className="px-3 md:px-6 py-3 md:py-4">
-                      <div className="font-bold text-slate-200 text-sm md:text-base">{lead.name}</div>
-                      <div className="text-slate-500 text-[10px] md:text-xs flex items-center gap-1 mt-1 font-mono">
-                        <MapPin size={10} className="md:w-3 md:h-3" /> <span className="truncate max-w-[100px] md:max-w-none">{lead.address}</span>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-slate-200 text-base">{lead.name}</div>
+                      <div className="text-slate-500 text-xs flex items-center gap-1 mt-1 font-mono">
+                        <MapPin size={12} /> {lead.address}
                         {lead.age && lead.age > 65 && (
                           <span className="ml-2 text-[10px] bg-red-500/20 text-red-400 px-1 rounded border border-red-500/30">
                             SENIOR ({lead.age})
@@ -140,11 +140,11 @@ const LeadBoard: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 md:px-6 py-3 md:py-4">
+                    <td className="px-6 py-4">
                       {lead.routing ? (
                         <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1 md:gap-2">
-                            <span className={`flex items-center gap-1 text-[10px] md:text-xs font-bold px-1 md:px-1.5 py-0.5 rounded
+                          <div className="flex items-center gap-2">
+                            <span className={`flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded
                               ${lead.routing.quality === 'HOT' ? 'bg-orange-500/20 text-solar-orange border border-solar-orange/30' : 
                                 lead.routing.quality === 'WARM' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
                                 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
@@ -179,8 +179,8 @@ const LeadBoard: React.FC = () => {
                           <span className="font-mono font-bold text-slate-300 text-xs md:text-sm">${lead.estimatedBill}</span>
                        </div>
                     </td>
-                    <td className="px-3 md:px-6 py-3 md:py-4 text-right">
-                      <button className="text-slate-400 hover:text-white hover:bg-slate-700 px-2 md:px-3 py-1 md:py-1.5 rounded-md text-[10px] md:text-xs font-medium transition-colors border border-transparent hover:border-slate-600">
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border border-transparent hover:border-slate-600">
                         View
                       </button>
                     </td>
@@ -208,12 +208,12 @@ const LeadBoard: React.FC = () => {
 
       {/* Add Lead Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => !isRouting && setIsModalOpen(false)}></div>
             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative overflow-hidden animate-fade-in z-10 max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="px-4 md:px-6 py-3 md:py-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/30 sticky top-0">
-                    <h3 className="text-base md:text-lg font-display font-bold text-white flex items-center gap-2">
+                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/30 sticky top-0">
+                    <h3 className="text-lg font-display font-bold text-white flex items-center gap-2">
                         <div className="p-1.5 bg-solar-orange/10 rounded-lg">
                            <Sparkles size={16} className="text-solar-orange"/> 
                         </div>
@@ -227,7 +227,7 @@ const LeadBoard: React.FC = () => {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleAddLead} className="p-4 md:p-6 space-y-3 md:space-y-4">
+                <form onSubmit={handleAddLead} className="p-6 space-y-4">
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Homeowner Name</label>
                         <div className="relative">
@@ -244,7 +244,7 @@ const LeadBoard: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Est. Monthly Bill ($)</label>
                           <div className="relative">

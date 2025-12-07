@@ -45,14 +45,14 @@ export const ProjectTracker = () => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in overflow-x-hidden w-full">
+    <div className="space-y-6 animate-fade-in overflow-x-hidden w-full">
        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
         <div>
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
+          <h2 className="text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
              <HardHat className="text-solar-orange" />
              Project Tracker
           </h2>
-          <p className="text-slate-400 mt-1 text-sm md:text-base">Track installations from Site Survey to PTO.</p>
+          <p className="text-slate-400 mt-1">Track installations from Site Survey to PTO.</p>
         </div>
       </div>
 
@@ -65,14 +65,14 @@ export const ProjectTracker = () => {
         ) : (
           <div className="divide-y divide-slate-800/50">
             {projects.map((p) => (
-              <div key={p.id} className="p-4 md:p-6 hover:bg-slate-800/20 transition-colors">
+              <div key={p.id} className="p-6 hover:bg-slate-800/20 transition-colors">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                    <div>
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-xs font-bold text-slate-500 border border-slate-700 rounded px-1.5 py-0.5">{p.id}</span>
-                        <h3 className="text-base md:text-lg font-bold text-slate-200">System Installation</h3>
+                        <h3 className="text-lg font-bold text-slate-200">System Installation</h3>
                       </div>
-                      <div className="text-xs md:text-sm text-slate-400 mt-1 flex items-center gap-2">
+                      <div className="text-sm text-slate-400 mt-1 flex items-center gap-2">
                         <span>{p.kW.toFixed(1)} kW System</span>
                         <span className="text-slate-700">•</span>
                         <span>Updated {p.lastUpdated}</span>
@@ -124,7 +124,7 @@ export const ProjectTracker = () => {
                             }`}
                           ></div>
                           <span 
-                            className={`text-[8px] md:text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${
+                            className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${
                               isCurrent ? 'text-emerald-400' : isCompleted ? 'text-slate-400' : 'text-slate-600'
                             }`}
                           >

@@ -66,14 +66,14 @@ const SolarIntelligence: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in max-w-6xl mx-auto overflow-x-hidden w-full">
+    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto overflow-x-hidden w-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
+          <h2 className="text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
             <Sun className="text-solar-orange" />
             Solar Intelligence
           </h2>
-          <p className="text-slate-400 mt-1 text-sm md:text-base">AI-powered roof analysis, deal coaching, and ethical auditing.</p>
+          <p className="text-slate-400 mt-1">AI-powered roof analysis, deal coaching, and ethical auditing.</p>
         </div>
         <div className="flex items-center gap-3 bg-slate-900 border border-slate-700 p-1 rounded-lg w-full sm:w-auto">
            <select 
@@ -91,26 +91,26 @@ const SolarIntelligence: React.FC = () => {
       <div className="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-1 px-1">
           <button 
             onClick={() => setActiveTab('ANALYSIS')}
-            className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'ANALYSIS' ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'ANALYSIS' ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Roof & Financials
           </button>
           <button 
             onClick={() => setActiveTab('COPILOT')}
-            className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'COPILOT' ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'COPILOT' ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Deal Copilot
           </button>
           <button 
             onClick={() => setActiveTab('COMPLIANCE')}
-            className={`px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'COMPLIANCE' ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/50' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'COMPLIANCE' ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/50' : 'text-slate-500 hover:text-slate-300'}`}
           >
             <Shield size={14} />
             Ethics Shield
           </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Left Column: Context Aware */}
         <div className="space-y-6">
