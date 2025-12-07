@@ -12,22 +12,22 @@ const PROJECTS_KEY = "primus_projects";
 const COMMISSIONS_KEY = "primus_commissions";
 
 const StatCard: React.FC<{ title: string; value: string; subtext: string; icon: React.ElementType; color: string }> = ({ title, value, subtext, icon: Icon, color }) => (
-  <div className="glass-panel p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-slate-700 transition-all group relative overflow-hidden">
+  <div className="glass-panel p-5 rounded-2xl shadow-lg border border-slate-800 hover:border-slate-700 transition-all group relative overflow-hidden min-h-[140px]">
     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-white/5 to-transparent rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
     <div className="flex justify-between items-start relative z-10">
-      <div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{title}</p>
-        <h3 className="text-3xl font-display font-bold text-slate-100 mt-2">{value}</h3>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-tight">{title}</p>
+        <h3 className="text-2xl font-display font-bold text-slate-100 mt-1 whitespace-nowrap">{value}</h3>
       </div>
-      <div className={`p-3 rounded-xl bg-slate-900 border border-slate-800 shadow-inner group-hover:scale-110 transition-transform ${color}`}>
-        <Icon size={22} className="text-current" />
+      <div className={`p-2 rounded-xl bg-slate-900 border border-slate-800 shadow-inner group-hover:scale-110 transition-transform flex-shrink-0 ml-2 ${color}`}>
+        <Icon size={18} className="text-current" />
       </div>
     </div>
-    <div className="mt-4 flex items-center text-sm relative z-10">
-      <span className="text-green-400 font-bold flex items-center bg-green-500/10 px-2 py-0.5 rounded text-xs border border-green-500/20">
-        <TrendingUp size={12} className="mr-1" /> {subtext}
+    <div className="mt-3 flex items-center text-sm relative z-10 flex-wrap gap-1">
+      <span className="text-green-400 font-bold flex items-center bg-green-500/10 px-1.5 py-0.5 rounded text-[10px] border border-green-500/20 whitespace-nowrap">
+        <TrendingUp size={10} className="mr-1" /> {subtext}
       </span>
-      <span className="text-slate-500 ml-2 text-xs">vs last month</span>
+      <span className="text-slate-500 text-[10px] whitespace-nowrap">vs last month</span>
     </div>
   </div>
 );
@@ -81,7 +81,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard title="Total Commissions" value={`$${(totalCommission/1000).toFixed(1)}k`} subtext="+12.5%" icon={DollarSign} color="text-emerald-400" />
         <StatCard title="Power Sold" value="145 kW" subtext="+45 kW" icon={Zap} color="text-solar-orange" />
         <StatCard title="Close Rate" value={`${closeRate}%`} subtext="+4%" icon={Activity} color="text-blue-400" />
