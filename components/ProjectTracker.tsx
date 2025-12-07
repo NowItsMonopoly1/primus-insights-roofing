@@ -45,7 +45,7 @@ export const ProjectTracker = () => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in">
+    <div className="space-y-4 md:space-y-6 animate-fade-in overflow-x-hidden w-full">
        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
         <div>
           <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100 flex items-center gap-3">

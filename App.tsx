@@ -57,8 +57,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-solar-orange selection:text-white overflow-hidden">
-      {/* Mobile Overlay */}
+    <div className="flex min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-solar-orange selection:text-white overflow-x-hidden">
+      {/* Mobile Overlay */}}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 md:hidden" 
@@ -76,20 +76,20 @@ const App: React.FC = () => {
       />
       
       {/* Main Content Area - Scrollable */}
-      <div className="flex-1 md:ml-64 flex flex-col h-screen relative">
+      <div className="flex-1 md:ml-64 flex flex-col h-screen relative overflow-x-hidden">
         
         {/* Top Header - Sticky */}
         <Header title={getPageTitle()} userProfile={userProfile} setSidebarOpen={setSidebarOpen} />
 
         {/* Ambient Background - Toned down for professional look */}
-        <div className="fixed inset-0 pointer-events-none z-0">
-             <div className="absolute top-[-20%] left-[20%] w-[500px] h-[500px] bg-blue-900/20 blur-[120px] rounded-full mix-blend-screen opacity-50"></div>
-             <div className="absolute bottom-[-10%] right-[10%] w-[400px] h-[400px] bg-emerald-900/10 blur-[100px] rounded-full mix-blend-screen opacity-40"></div>
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+             <div className="absolute top-0 left-1/4 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-blue-900/20 blur-[120px] rounded-full mix-blend-screen opacity-50"></div>
+             <div className="absolute bottom-0 right-0 w-[250px] md:w-[400px] h-[250px] md:h-[400px] bg-emerald-900/10 blur-[100px] rounded-full mix-blend-screen opacity-40"></div>
         </div>
 
         {/* Scrollable Content Container */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 relative z-10 scroll-smooth">
-          <div className="max-w-7xl mx-auto pb-10">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 relative z-10 scroll-smooth w-full">
+          <div className="max-w-7xl mx-auto pb-10 w-full overflow-x-hidden">
             {renderContent()}
           </div>
         </main>

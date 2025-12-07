@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
   const closeRate = totalLeads > 0 ? Math.round((closedWon / totalLeads) * 100) : 0;
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-fade-in pb-10">
+    <div className="space-y-6 md:space-y-8 animate-fade-in pb-10 overflow-x-hidden w-full">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100">Solar Command Center</h2>
