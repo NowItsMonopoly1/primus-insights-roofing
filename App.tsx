@@ -58,7 +58,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-solar-orange selection:text-white overflow-x-hidden">
-      {/* Mobile Overlay */}}
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 md:hidden" 
