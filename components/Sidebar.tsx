@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { LayoutDashboard, Sun, DollarSign, Settings, Zap, Briefcase, HardHat, ChevronRight, CreditCard, ArrowUpCircle } from 'lucide-react';
+import { LayoutDashboard, Sun, DollarSign, Settings, Zap, Briefcase, HardHat, ChevronRight, CreditCard, ArrowUpCircle, X } from 'lucide-react';
 import { UserProfile, PlanId } from '../types';
 import { AVATAR_OPTIONS } from '../constants';
 
@@ -9,9 +8,11 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   userProfile: UserProfile;
   onRequestUpgrade: (plan: PlanId) => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile, onRequestUpgrade }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile, onRequestUpgrade, sidebarOpen, setSidebarOpen }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'leads', label: 'Lead Board', icon: Briefcase },
@@ -32,15 +33,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile,
   const selectedAvatar = AVATAR_OPTIONS.find(a => a.id === userProfile.avatarId);
 
   const handleQuickUpgrade = () => {
-      // Smart upgrade logic: Free -> Pro, else -> Team
       const nextTier = userProfile.plan === 'FREE' ? 'PRO' : 'TEAM';
       onRequestUpgrade(nextTier);
   };
 
   return (
-    <aside className="w-64 bg-slate-950/80 backdrop-blur-xl border-r border-slate-800 flex flex-col h-screen fixed left-0 top-0 z-30">
+    <aside className={`w-64 bg-slate-950/95 backdrop-blur-xl border-r border-slate-800 flex flex-col h-screen fixed left-0 top-0 z-40 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
       {/* Brand Header */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-800/50">
+      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800/50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-solar-orange to-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
             <Zap size={18} className="text-white fill-white" />
@@ -50,10 +50,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile,
             <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Sales OS v2.0</span>
           </div>
         </div>
+        {/* Close button for mobile */}
+        <button 
+          onClick={() => setSidebarOpen(false)}
+          className="md:hidden text-slate-400 hover:text-white p-1"
+        >
+          <X size={20} />
+        </button>
       </div>
       
       {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1">
+      <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
         <div className="px-3 mb-2">
             <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Main Menu</span>
         </div>

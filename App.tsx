@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -21,17 +20,17 @@ const DEFAULT_PROFILE: UserProfile = {
   role: 'REP',
   market: 'CA-North',
   avatarId: 'avatar-3',
-  plan: 'FREE' // Default to FREE (SCOUT)
+  plan: 'FREE'
 };
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const [userProfile, setUserProfile] = useState<UserProfile>(() => 
     loadOrDefault<UserProfile>(USER_PROFILE_KEY, DEFAULT_PROFILE)
   );
   
-  // Upgrade Modal State
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradePlan, setUpgradePlan] = useState<PlanId | null>(null);
 
@@ -71,7 +70,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-solar-orange selection:text-white overflow-hidden">
+    <div className="flex min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-solar-orange selection:text-white overflow-x-hidden">
       {/* Global Upgrade Modal */}
       <UpgradeModal 
         isOpen={upgradeOpen} 
@@ -79,33 +78,44 @@ const App: React.FC = () => {
         requiredPlan={upgradePlan} 
       />
 
-      {/* Left Sidebar - Fixed */}
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Left Sidebar - Responsive */}
       <Sidebar 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        setActiveTab={(tab) => { setActiveTab(tab); setSidebarOpen(false); }} 
         userProfile={userProfile} 
         onRequestUpgrade={requestUpgrade}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
       />
       
       {/* Main Content Area - Scrollable */}
-      <div className="flex-1 ml-64 flex flex-col h-screen relative">
+      <div className="flex-1 md:ml-64 flex flex-col h-screen relative overflow-x-hidden">
         
         {/* Top Header - Sticky */}
         <Header 
           title={getPageTitle()} 
           userProfile={userProfile} 
           onRequestUpgrade={requestUpgrade}
+          setSidebarOpen={setSidebarOpen}
         />
 
-        {/* Ambient Background - Toned down for professional look */}
-        <div className="fixed inset-0 pointer-events-none z-0">
-             <div className="absolute top-[-20%] left-[20%] w-[500px] h-[500px] bg-blue-900/20 blur-[120px] rounded-full mix-blend-screen opacity-50"></div>
-             <div className="absolute bottom-[-10%] right-[10%] w-[400px] h-[400px] bg-emerald-900/10 blur-[100px] rounded-full mix-blend-screen opacity-40"></div>
+        {/* Ambient Background */}
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+             <div className="absolute top-0 left-1/4 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-blue-900/20 blur-[120px] rounded-full mix-blend-screen opacity-50"></div>
+             <div className="absolute bottom-0 right-0 w-[250px] md:w-[400px] h-[250px] md:h-[400px] bg-emerald-900/10 blur-[100px] rounded-full mix-blend-screen opacity-40"></div>
         </div>
 
         {/* Scrollable Content Container */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-8 relative z-10 scroll-smooth">
-          <div className="max-w-7xl mx-auto pb-10">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 relative z-10 scroll-smooth w-full">
+          <div className="max-w-6xl pb-10 w-full overflow-x-hidden">
             {renderContent()}
           </div>
         </main>

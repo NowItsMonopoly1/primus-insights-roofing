@@ -1,20 +1,28 @@
-
 import React from 'react';
-import { Search, Bell, Wifi, HelpCircle } from 'lucide-react';
+import { Search, Bell, Wifi, HelpCircle, Menu } from 'lucide-react';
 import { UserProfile, PlanId } from '../types';
 
 interface HeaderProps {
   title: string;
   userProfile: UserProfile;
   onRequestUpgrade: (plan: PlanId) => void;
+  setSidebarOpen: (open: boolean) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, userProfile, onRequestUpgrade }) => {
+const Header: React.FC<HeaderProps> = ({ title, userProfile, onRequestUpgrade, setSidebarOpen }) => {
   return (
-    <header className="h-16 border-b border-slate-800 bg-slate-950/50 backdrop-blur-md sticky top-0 z-10 px-8 flex items-center justify-between">
-      {/* Left: Breadcrumb / Title Context */}
-      <div className="flex items-center gap-4">
-        <h2 className="text-slate-200 font-display font-medium text-sm tracking-wide">
+    <header className="h-14 md:h-16 border-b border-slate-800 bg-slate-950/50 backdrop-blur-md sticky top-0 z-10 px-4 md:px-8 flex items-center justify-between">
+      {/* Left: Hamburger + Breadcrumb */}
+      <div className="flex items-center gap-3">
+        {/* Hamburger Menu - Mobile Only */}
+        <button 
+          onClick={() => setSidebarOpen(true)}
+          className="md:hidden text-slate-400 hover:text-white p-1"
+        >
+          <Menu size={22} />
+        </button>
+        
+        <h2 className="text-slate-200 font-display font-medium text-xs md:text-sm tracking-wide">
           <span className="hidden md:inline">PRIMUS HOME PRO</span>
           <span className="md:hidden">PHP</span>
           <span className="text-slate-600 mx-2">/</span> 
@@ -22,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({ title, userProfile, onRequestUpgrade })
         </h2>
       </div>
 
-      {/* Center: Global Search (Optional) */}
+      {/* Center: Global Search (Desktop Only) */}
       <div className="hidden md:flex flex-1 max-w-md mx-8 relative group">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search size={14} className="text-slate-500 group-focus-within:text-solar-orange transition-colors" />
@@ -38,20 +46,20 @@ const Header: React.FC<HeaderProps> = ({ title, userProfile, onRequestUpgrade })
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1 px-2 py-1 bg-emerald-500/5 border border-emerald-500/20 rounded-full">
-            <Wifi size={12} className="text-emerald-500" />
-            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider pr-1">Online</span>
+      <div className="flex items-center gap-2 md:gap-4">
+        <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-emerald-500/5 border border-emerald-500/20 rounded-full">
+            <Wifi size={10} className="text-emerald-500" />
+            <span className="text-[9px] md:text-[10px] font-bold text-emerald-500 uppercase tracking-wider pr-1">Online</span>
         </div>
 
-        <div className="h-6 w-px bg-slate-800 mx-1"></div>
+        <div className="hidden md:block h-6 w-px bg-slate-800 mx-1"></div>
 
-        <button className="text-slate-400 hover:text-white transition-colors relative">
+        <button className="text-slate-400 hover:text-white transition-colors relative p-1">
           <Bell size={18} />
           <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-slate-950 bg-solar-orange transform translate-x-1/2 -translate-y-1/2"></span>
         </button>
         
-        <button className="text-slate-400 hover:text-white transition-colors">
+        <button className="hidden md:block text-slate-400 hover:text-white transition-colors p-1">
           <HelpCircle size={18} />
         </button>
       </div>
