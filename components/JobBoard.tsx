@@ -1,14 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { MOCK_LEADS } from '../constants';
-import { LeadStatus, Lead } from '../types';
-import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2 } from 'lucide-react';
+import { LeadStatus, Lead, UserProfile, PlanId } from '../types';
+import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone } from 'lucide-react';
 import { loadOrDefault, save } from '../utils/storage';
 import { routeLead } from '../services/geminiService';
+import { hasAccess } from '../utils/plan'; // Import gating logic
 
 const LEADS_KEY = "primus_leads";
 
-const LeadBoard: React.FC = () => {
+interface LeadBoardProps {
+  userProfile: UserProfile;
+  onRequestUpgrade: (plan: PlanId) => void;
+}
+
+const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) => {
   // Persistence State
   const [leads, setLeads] = useState<Lead[]>(() => 
     loadOrDefault<Lead[]>(LEADS_KEY, MOCK_LEADS)
@@ -19,9 +25,15 @@ const LeadBoard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRouting, setIsRouting] = useState(false);
+  
+  // Edit State
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Check Permissions using Utility
+  const canUseRouter = hasAccess(userProfile.plan as PlanId, 'leadRouting');
 
   // Form State
-  const [newLead, setNewLead] = useState({
+  const [formData, setFormData] = useState({
     name: '',
     address: '',
     estimatedBill: '',
@@ -34,31 +46,70 @@ const LeadBoard: React.FC = () => {
     save(LEADS_KEY, leads);
   }, [leads]);
 
-  const handleAddLead = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+      setEditingId(null);
+      setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+      setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (e: React.MouseEvent, lead: Lead) => {
+      e.stopPropagation(); 
+      setEditingId(lead.id);
+      setFormData({
+          name: lead.name,
+          address: lead.address,
+          estimatedBill: lead.estimatedBill?.toString() || '',
+          age: lead.age?.toString() || '',
+          notes: lead.notes || ''
+      });
+      setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsRouting(true);
     
-    // 1. Create Base Lead
+    // UPDATE EXISTING LEAD
+    if (editingId) {
+        setLeads(prev => prev.map(l => l.id === editingId ? {
+            ...l,
+            name: formData.name,
+            address: formData.address,
+            estimatedBill: Number(formData.estimatedBill) || 0,
+            age: formData.age ? Number(formData.age) : undefined,
+            notes: formData.notes
+        } : l));
+        
+        setIsModalOpen(false);
+        setEditingId(null);
+        setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+        return;
+    }
+
+    // CREATE NEW LEAD
     const baseLead: Lead = {
       id: `L-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
-      name: newLead.name,
-      address: newLead.address,
-      estimatedBill: Number(newLead.estimatedBill) || 0,
-      age: newLead.age ? Number(newLead.age) : undefined,
-      notes: newLead.notes,
+      name: formData.name,
+      address: formData.address,
+      estimatedBill: Number(formData.estimatedBill) || 0,
+      age: formData.age ? Number(formData.age) : undefined,
+      notes: formData.notes,
       status: "NEW",
       createdAt: new Date().toISOString().slice(0, 10)
     };
 
-    // 2. Run AI Routing
-    const routingInfo = await routeLead(baseLead);
-    const finalLead = { ...baseLead, routing: routingInfo };
+    let finalLead = baseLead;
 
-    // 3. Update State
+    // Run AI Routing ONLY if allowed (EMPIRE+)
+    if (canUseRouter) {
+        setIsRouting(true);
+        const routingInfo = await routeLead(baseLead);
+        finalLead = { ...baseLead, routing: routingInfo };
+        setIsRouting(false);
+    }
+
     setLeads([finalLead, ...leads]);
     setIsModalOpen(false);
-    setIsRouting(false);
-    setNewLead({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+    setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
   };
 
   const filteredLeads = leads.filter((lead) => {
@@ -68,16 +119,26 @@ const LeadBoard: React.FC = () => {
     return statusMatch && searchMatch;
   });
 
+  const getStatusColor = (status: string) => {
+      switch(status) {
+          case 'NEW': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+          case 'QUALIFIED': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+          case 'CLOSED_WON': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+          case 'CLOSED_LOST': return 'bg-red-500/10 text-red-400 border-red-500/20';
+          default: return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+      }
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in relative overflow-x-hidden w-full">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-3">
+    <div className="space-y-6 animate-fade-in relative">
+      <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-100">Lead Board</h2>
+          <h2 className="text-3xl font-display font-bold text-slate-100">Lead Board</h2>
           <p className="text-slate-400 mt-1">Manage and track your solar sales pipeline.</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-solar-orange hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-bold transition-all shadow-lg shadow-orange-500/20 text-sm cursor-pointer hover:scale-105 active:scale-95 w-full md:w-auto justify-center"
+          onClick={handleOpenCreate}
+          className="bg-solar-orange hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-bold transition-all shadow-lg shadow-orange-500/20 text-sm cursor-pointer hover:scale-105 active:scale-95"
         >
           <Plus size={18} /> New Lead
         </button>
@@ -86,7 +147,7 @@ const LeadBoard: React.FC = () => {
       <div className="glass-panel rounded-xl overflow-hidden border border-slate-800">
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 bg-slate-900/50">
-          <div className="relative flex-1 md:max-w-md">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
             <input 
               type="text"
@@ -97,11 +158,11 @@ const LeadBoard: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter size={16} className="text-slate-500" />
+            <Filter size={16} className="text-slate-500 hidden md:block" />
             <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
-                className="bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-300 py-2.5 px-3 focus:outline-none focus:border-solar-orange cursor-pointer"
+                className="w-full md:w-auto bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-300 py-2.5 px-3 focus:outline-none focus:border-solar-orange cursor-pointer"
             >
                 <option value="ALL">All Statuses</option>
                 <option value="NEW">New</option>
@@ -113,13 +174,16 @@ const LeadBoard: React.FC = () => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto min-h-[400px]">
-          <table className="w-full text-left text-sm min-w-[600px]">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto min-h-[400px]">
+          <table className="w-full text-left text-sm">
             <thead className="bg-slate-900/80 text-slate-400 font-medium uppercase text-xs tracking-wider">
               <tr>
                 <th className="px-6 py-4">Homeowner</th>
-                <th className="px-6 py-4">Lead IQ (AI)</th>
+                <th className="px-6 py-4 flex items-center gap-2">
+                    Lead IQ 
+                    {!canUseRouter && <Lock size={12} className="text-slate-600" />}
+                </th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Est. Bill</th>
                 <th className="px-6 py-4 text-right">Actions</th>
@@ -151,37 +215,43 @@ const LeadBoard: React.FC = () => {
                                {lead.routing.quality === 'HOT' && <Flame size={10} fill="currentColor" />}
                                {lead.routing.score}
                             </span>
-                            <span className="text-[10px] md:text-xs text-slate-400 font-mono hidden sm:inline">
+                            <span className="text-xs text-slate-400 font-mono">
                                {lead.routing.quality}
                             </span>
                           </div>
-                          <div className="text-[9px] md:text-[10px] text-emerald-400 hidden sm:block">
+                          <div className="text-[10px] text-emerald-400">
                              Assign: <span className="font-bold">{lead.routing.recommendedAgentType}</span>
                           </div>
                         </div>
+                      ) : !canUseRouter ? (
+                        <div 
+                            className="flex items-center gap-2 text-slate-600 text-xs bg-slate-900/50 px-2 py-1 rounded w-fit cursor-pointer hover:bg-slate-900 hover:text-slate-400"
+                            onClick={() => onRequestUpgrade('TEAM')}
+                        >
+                            <Lock size={10} />
+                            <span>Upgrade to Empire</span>
+                        </div>
                       ) : (
-                        <span className="text-slate-600 text-[10px] md:text-xs italic">Pending...</span>
+                        <span className="text-slate-600 text-xs italic">Pending Analysis...</span>
                       )}
                     </td>
-                    <td className="px-3 md:px-6 py-3 md:py-4">
-                      <span className={`px-1.5 md:px-2.5 py-0.5 md:py-1 rounded text-[10px] md:text-xs font-bold border uppercase tracking-wider
-                        ${lead.status === 'NEW' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 
-                          lead.status === 'QUALIFIED' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 
-                          lead.status === 'CLOSED_WON' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                          lead.status === 'CLOSED_LOST' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                          'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'}`}>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded text-xs font-bold border uppercase tracking-wider ${getStatusColor(lead.status)}`}>
                         {lead.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-3 md:px-6 py-3 md:py-4">
-                       <div className="flex items-center gap-1 md:gap-2">
-                          <Battery size={12} className="text-solar-orange md:w-[14px] md:h-[14px]"/>
-                          <span className="font-mono font-bold text-slate-300 text-xs md:text-sm">${lead.estimatedBill}</span>
+                    <td className="px-6 py-4">
+                       <div className="flex items-center gap-2">
+                          <Battery size={14} className="text-solar-orange"/>
+                          <span className="font-mono font-bold text-slate-300">${lead.estimatedBill}</span>
                        </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border border-transparent hover:border-slate-600">
-                        View
+                      <button 
+                        onClick={(e) => handleOpenEdit(e, lead)}
+                        className="text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border border-transparent hover:border-slate-600 flex items-center gap-2 ml-auto"
+                      >
+                        <Edit2 size={12} /> Edit
                       </button>
                     </td>
                   </tr>
@@ -189,35 +259,57 @@ const LeadBoard: React.FC = () => {
               })}
             </tbody>
           </table>
-          {filteredLeads.length === 0 && (
-              <div className="p-12 text-center text-slate-500 flex flex-col items-center">
-                  <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mb-4">
-                      <Sparkles size={24} className="text-slate-700" />
-                  </div>
-                  <p>No leads found matching your criteria.</p>
-                  <button 
-                    onClick={() => {setFilter('ALL'); setSearchTerm('');}}
-                    className="mt-2 text-solar-orange hover:underline text-sm"
-                  >
-                    Clear filters
-                  </button>
-              </div>
-          )}
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden p-4 space-y-4 min-h-[400px]">
+             {filteredLeads.map((lead) => (
+                 <div key={lead.id} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 active:scale-[0.98] transition-transform" onClick={(e) => handleOpenEdit(e, lead)}>
+                    <div className="flex justify-between items-start mb-3">
+                        <div>
+                             <h4 className="font-bold text-slate-200 text-base">{lead.name}</h4>
+                             <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                                 <MapPin size={10} /> {lead.address}
+                             </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${getStatusColor(lead.status)}`}>
+                             {lead.status.replace('_', ' ')}
+                        </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between border-t border-slate-800/50 pt-3 mt-2">
+                         <div className="flex items-center gap-2">
+                            <Battery size={14} className="text-solar-orange"/>
+                            <span className="font-mono font-bold text-slate-300 text-sm">${lead.estimatedBill}/mo</span>
+                         </div>
+                         
+                         {lead.routing?.quality === 'HOT' && (
+                             <div className="flex items-center gap-1 px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded text-solar-orange text-xs font-bold">
+                                 <Flame size={10} fill="currentColor" /> HOT LEAD
+                             </div>
+                         )}
+                         
+                         <button className="text-slate-400">
+                             <Edit2 size={16} />
+                         </button>
+                    </div>
+                 </div>
+             ))}
         </div>
       </div>
 
-      {/* Add Lead Modal */}
+      {/* Add/Edit Lead Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => !isRouting && setIsModalOpen(false)}></div>
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative overflow-hidden animate-fade-in z-10 max-h-[90vh] overflow-y-auto">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl relative overflow-hidden animate-fade-in z-10 flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/30 sticky top-0">
+                <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/30">
                     <h3 className="text-lg font-display font-bold text-white flex items-center gap-2">
                         <div className="p-1.5 bg-solar-orange/10 rounded-lg">
                            <Sparkles size={16} className="text-solar-orange"/> 
                         </div>
-                        Add New Lead
+                        {editingId ? "Edit Lead" : "Add New Lead"}
                     </h3>
                     {!isRouting && (
                         <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white transition-colors">
@@ -226,8 +318,8 @@ const LeadBoard: React.FC = () => {
                     )}
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleAddLead} className="p-6 space-y-4">
+                {/* Form - Scrollable Body */}
+                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Homeowner Name</label>
                         <div className="relative">
@@ -238,8 +330,8 @@ const LeadBoard: React.FC = () => {
                                 type="text" 
                                 placeholder="e.g. John Smith"
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all disabled:opacity-50"
-                                value={newLead.name}
-                                onChange={e => setNewLead({...newLead, name: e.target.value})}
+                                value={formData.name}
+                                onChange={e => setFormData({...formData, name: e.target.value})}
                             />
                         </div>
                     </div>
@@ -256,8 +348,8 @@ const LeadBoard: React.FC = () => {
                                   min="0"
                                   placeholder="250"
                                   className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all font-mono disabled:opacity-50"
-                                  value={newLead.estimatedBill}
-                                  onChange={e => setNewLead({...newLead, estimatedBill: e.target.value})}
+                                  value={formData.estimatedBill}
+                                  onChange={e => setFormData({...formData, estimatedBill: e.target.value})}
                               />
                           </div>
                       </div>
@@ -272,8 +364,8 @@ const LeadBoard: React.FC = () => {
                                   max="120"
                                   placeholder="45"
                                   className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all font-mono disabled:opacity-50"
-                                  value={newLead.age}
-                                  onChange={e => setNewLead({...newLead, age: e.target.value})}
+                                  value={formData.age}
+                                  onChange={e => setFormData({...formData, age: e.target.value})}
                               />
                           </div>
                       </div>
@@ -289,8 +381,8 @@ const LeadBoard: React.FC = () => {
                                 type="text" 
                                 placeholder="e.g. 123 Sun Ave, Solar City"
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all disabled:opacity-50"
-                                value={newLead.address}
-                                onChange={e => setNewLead({...newLead, address: e.target.value})}
+                                value={formData.address}
+                                onChange={e => setFormData({...formData, address: e.target.value})}
                             />
                         </div>
                     </div>
@@ -304,13 +396,20 @@ const LeadBoard: React.FC = () => {
                                 disabled={isRouting}
                                 placeholder="e.g. Referred by neighbor, south facing roof..."
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all resize-none disabled:opacity-50"
-                                value={newLead.notes}
-                                onChange={e => setNewLead({...newLead, notes: e.target.value})}
+                                value={formData.notes}
+                                onChange={e => setFormData({...formData, notes: e.target.value})}
                             />
                         </div>
                     </div>
+                    
+                    {!canUseRouter && !editingId && (
+                        <div className="bg-slate-800/50 p-3 rounded-lg flex items-center gap-3 border border-slate-700">
+                             <Lock size={16} className="text-slate-400" />
+                             <span className="text-xs text-slate-400">AI Lead Routing is disabled on {userProfile.plan}. <button type="button" onClick={() => onRequestUpgrade('TEAM')} className="text-solar-orange hover:underline">Upgrade to Empire</button> for auto-assignment.</span>
+                        </div>
+                    )}
 
-                    <div className="pt-4 flex gap-3">
+                    <div className="pt-4 flex gap-3 sticky bottom-0 bg-slate-900 pb-2">
                         <button 
                             type="button" 
                             disabled={isRouting}
@@ -330,7 +429,7 @@ const LeadBoard: React.FC = () => {
                                     Routing...
                                 </>
                             ) : (
-                                "Create Lead"
+                                editingId ? "Update Lead" : "Create Lead"
                             )}
                         </button>
                     </div>

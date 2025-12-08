@@ -1,18 +1,17 @@
 
 import React from 'react';
-import { LayoutDashboard, Sun, DollarSign, Settings, Zap, Briefcase, HardHat, ChevronRight, X } from 'lucide-react';
-import { UserProfile } from '../types';
+import { LayoutDashboard, Sun, DollarSign, Settings, Zap, Briefcase, HardHat, ChevronRight, CreditCard, ArrowUpCircle } from 'lucide-react';
+import { UserProfile, PlanId } from '../types';
 import { AVATAR_OPTIONS } from '../constants';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   userProfile: UserProfile;
-  sidebarOpen?: boolean;
-  setSidebarOpen?: (open: boolean) => void;
+  onRequestUpgrade: (plan: PlanId) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile, sidebarOpen, setSidebarOpen }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile, onRequestUpgrade }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'leads', label: 'Lead Board', icon: Briefcase },
@@ -32,32 +31,32 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile,
 
   const selectedAvatar = AVATAR_OPTIONS.find(a => a.id === userProfile.avatarId);
 
-  return (
-    <aside className={`sidebar fixed z-40 h-full transition-transform duration-300 md:translate-x-0 md:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      {/* Mobile Close Button */}
-      {setSidebarOpen && (
-        <button 
-          onClick={() => setSidebarOpen(false)}
-          className="md:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-        >
-          <X size={20} />
-        </button>
-      )}
+  const handleQuickUpgrade = () => {
+      // Smart upgrade logic: Free -> Pro, else -> Team
+      const nextTier = userProfile.plan === 'FREE' ? 'PRO' : 'TEAM';
+      onRequestUpgrade(nextTier);
+  };
 
+  return (
+    <aside className="w-64 bg-slate-950/80 backdrop-blur-xl border-r border-slate-800 flex flex-col h-screen fixed left-0 top-0 z-30">
       {/* Brand Header */}
-      <div className="sidebar-logo">
-        <div className="sidebar-orb">
-          <Zap size={18} />
-        </div>
-        <div className="sidebar-title">
-          <h1>PRIMUS <span>HOME PRO</span></h1>
-          <span className="sidebar-version">Sales OS v2.0</span>
+      <div className="h-16 flex items-center px-6 border-b border-slate-800/50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-solar-orange to-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-orange-500/20">
+            <Zap size={18} className="text-white fill-white" />
+          </div>
+          <div>
+            <h1 className="text-sm font-display font-bold tracking-tight text-white leading-none">PRIMUS <span className="text-solar-orange">HOME PRO</span></h1>
+            <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Sales OS v2.0</span>
+          </div>
         </div>
       </div>
       
       {/* Navigation */}
-      <nav className="sidebar-nav">
-        <div className="sidebar-section-label">Main Menu</div>
+      <nav className="flex-1 py-6 px-3 space-y-1">
+        <div className="px-3 mb-2">
+            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Main Menu</span>
+        </div>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -65,49 +64,82 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile,
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`nav-link ${isActive ? 'nav-link-active' : ''}`}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                isActive 
+                  ? 'bg-slate-900 text-white shadow-inner shadow-black/20' 
+                  : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
+              }`}
             >
-              <div className="nav-link-content">
-                  <Icon size={18} className="nav-link-icon" />
-                  <span className="nav-link-label">{item.label}</span>
+              <div className="flex items-center gap-3">
+                  <Icon size={18} className={isActive ? 'text-solar-orange' : 'text-slate-500 group-hover:text-slate-400'} />
+                  <span className="font-medium text-sm">{item.label}</span>
               </div>
-              {isActive && <div className="nav-link-indicator"></div>}
+              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-solar-orange shadow-[0_0_8px_rgba(245,158,11,0.8)]"></div>}
             </button>
           );
         })}
 
-        <div className="sidebar-divider"></div>
+        <div className="my-6 border-t border-slate-800/50 mx-3"></div>
 
-        <div className="sidebar-section-label">System</div>
+        <div className="px-3 mb-2">
+            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">System</span>
+        </div>
         
         <button
-          onClick={() => setActiveTab('profile')}
-          className={`nav-link ${activeTab === 'profile' ? 'nav-link-active' : ''}`}
+          onClick={() => setActiveTab('billing')}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+            activeTab === 'billing'
+              ? 'bg-slate-900 text-white' 
+              : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
+          }`}
         >
-          <div className="nav-link-content">
-            <Settings size={18} className="nav-link-icon" />
-            <span className="nav-link-label">Settings</span>
-          </div>
+           <CreditCard size={18} className={activeTab === 'billing' ? 'text-solar-orange' : 'text-slate-500 group-hover:text-slate-400'} />
+           <span className="font-medium text-sm">Billing</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+            activeTab === 'profile'
+              ? 'bg-slate-900 text-white' 
+              : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
+          }`}
+        >
+           <Settings size={18} className={activeTab === 'profile' ? 'text-solar-orange' : 'text-slate-500 group-hover:text-slate-400'} />
+           <span className="font-medium text-sm">Settings</span>
         </button>
       </nav>
 
+      {/* Upgrade CTA */}
+      {userProfile.plan !== 'DEALER' && (
+          <div className="px-4 mb-4">
+              <button 
+                onClick={handleQuickUpgrade}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-solar-orange/10 to-red-500/10 border border-solar-orange/20 text-solar-orange hover:bg-solar-orange hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition-all group"
+              >
+                  <ArrowUpCircle size={14} />
+                  Upgrade Plan
+              </button>
+          </div>
+      )}
+
       {/* User Footer */}
-      <div className="sidebar-user-card">
+      <div className="p-4 border-t border-slate-800/50">
         <button 
           onClick={() => setActiveTab('profile')}
-          className="sidebar-user-card-inner"
+          className="w-full group flex items-center gap-3 p-2 rounded-lg hover:bg-slate-900/50 transition-all border border-transparent hover:border-slate-800 cursor-pointer"
         >
-          <div className="sidebar-user-avatar">
-             <div className={`sidebar-user-avatar-img ${selectedAvatar ? selectedAvatar.gradient : 'bg-slate-800 text-slate-300'}`}>
+          <div className="relative">
+             <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white border border-slate-700 group-hover:border-slate-500 transition-colors ${selectedAvatar ? selectedAvatar.gradient : 'bg-slate-800 text-slate-300'}`}>
                {getInitials(userProfile.name)}
              </div>
-             <div className="sidebar-user-status"></div>
+             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-950 rounded-full"></div>
           </div>
-          <div className="sidebar-user-info">
-             <p className="sidebar-user-name">{userProfile.name}</p>
-             <p className="sidebar-user-market">{userProfile.market}</p>
+          <div className="flex-1 text-left min-w-0">
+             <p className="text-sm font-medium text-slate-200 truncate group-hover:text-white">{userProfile.name}</p>
+             <p className="text-[10px] text-slate-500 uppercase tracking-wider truncate">{userProfile.plan} Plan</p>
           </div>
-          <ChevronRight size={14} className="sidebar-user-chevron" />
+          <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-400" />
         </button>
       </div>
     </aside>

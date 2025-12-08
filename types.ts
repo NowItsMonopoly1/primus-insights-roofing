@@ -52,6 +52,7 @@ export interface SolarAnalysis {
   systemSizeKw: number;
   viabilityScore: number; // 0–100
   summary: string;
+  groundingUrls?: string[]; // URLs from Google Maps/Search grounding
 
   // Financials
   systemCost: number;
@@ -90,12 +91,16 @@ export interface Commission {
   expectedPayDate?: string;
 }
 
+export type PlanId = "FREE" | "PRO" | "TEAM" | "DEALER";
+
 export interface UserProfile {
   id: string;
   name: string;
   role: "REP" | "CLOSER" | "OWNER";
   market: string;
   avatarId?: string;
+  plan: PlanId;
+  apiKey?: string; // New field for user-provided API key
 }
 
 // Charting Types

@@ -1,38 +1,81 @@
 
 import React, { useEffect, useState } from 'react';
 import { MOCK_CHART_DATA, SEED_LEADS, SEED_PROJECTS } from '../constants';
-import { DollarSign, Zap, Activity, Briefcase, TrendingUp, Sparkles, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
+import { DollarSign, Zap, Activity, Briefcase, TrendingUp, Sparkles, AlertTriangle, ArrowRight, Loader2, Trophy, Crown, Medal } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { loadOrDefault } from '../utils/storage';
-import { BusinessInsight, Lead, Project } from '../types';
+import { BusinessInsight, Lead, Project, PlanId } from '../types';
 import { generateBusinessInsights } from '../services/geminiService';
+import { hasAccess } from '../utils/plan';
 
 const LEADS_KEY = "primus_leads";
 const PROJECTS_KEY = "primus_projects";
 const COMMISSIONS_KEY = "primus_commissions";
 
+interface DashboardProps {
+  onRequestUpgrade: (plan: PlanId) => void;
+}
+
 const StatCard: React.FC<{ title: string; value: string; subtext: string; icon: React.ElementType; color: string }> = ({ title, value, subtext, icon: Icon, color }) => (
-  <div className="glass-panel p-5 rounded-2xl shadow-lg border border-slate-800 hover:border-slate-700 transition-all group relative overflow-hidden min-h-[140px]">
+  <div className="glass-panel p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-slate-700 transition-all group relative overflow-hidden">
     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-white/5 to-transparent rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
     <div className="flex justify-between items-start relative z-10">
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-tight">{title}</p>
-        <h3 className="text-2xl font-display font-bold text-slate-100 mt-1 whitespace-nowrap">{value}</h3>
+      <div>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{title}</p>
+        <h3 className="text-3xl font-display font-bold text-slate-100 mt-2">{value}</h3>
       </div>
-      <div className={`p-2 rounded-xl bg-slate-900 border border-slate-800 shadow-inner group-hover:scale-110 transition-transform flex-shrink-0 ml-2 ${color}`}>
-        <Icon size={18} className="text-current" />
+      <div className={`p-3 rounded-xl bg-slate-900 border border-slate-800 shadow-inner group-hover:scale-110 transition-transform ${color}`}>
+        <Icon size={22} className="text-current" />
       </div>
     </div>
-    <div className="mt-3 flex items-center text-sm relative z-10 flex-wrap gap-1">
-      <span className="text-green-400 font-bold flex items-center bg-green-500/10 px-1.5 py-0.5 rounded text-[10px] border border-green-500/20 whitespace-nowrap">
-        <TrendingUp size={10} className="mr-1" /> {subtext}
+    <div className="mt-4 flex items-center text-sm relative z-10">
+      <span className="text-green-400 font-bold flex items-center bg-green-500/10 px-2 py-0.5 rounded text-xs border border-green-500/20">
+        <TrendingUp size={12} className="mr-1" /> {subtext}
       </span>
-      <span className="text-slate-500 text-[10px] whitespace-nowrap">vs last month</span>
+      <span className="text-slate-500 ml-2 text-xs">vs last month</span>
     </div>
   </div>
 );
 
-const Dashboard: React.FC = () => {
+const LeaderboardWidget = () => {
+    const leaders = [
+        { name: 'Sarah Miller', score: 14500, deals: 8, avatar: 'bg-emerald-500' },
+        { name: 'Mike Ross', score: 12200, deals: 6, avatar: 'bg-blue-500' },
+        { name: 'Jessica Pearson', score: 9800, deals: 5, avatar: 'bg-purple-500' },
+        { name: 'Harvey Specter', score: 8500, deals: 4, avatar: 'bg-orange-500' },
+    ];
+
+    return (
+        <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col h-full">
+            <h3 className="text-lg font-bold text-slate-200 mb-6 flex items-center gap-2">
+                <Trophy size={18} className="text-yellow-400"/> Team Leaderboard
+            </h3>
+            <div className="flex-1 space-y-4">
+                {leaders.map((leader, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/50">
+                        <div className="w-8 h-8 flex items-center justify-center font-bold text-slate-500 text-sm">
+                            {i === 0 ? <Crown size={18} className="text-yellow-400" /> : 
+                             i === 1 ? <Medal size={18} className="text-slate-300" /> : 
+                             i === 2 ? <Medal size={18} className="text-orange-400" /> : `#${i + 1}`}
+                        </div>
+                        <div className={`w-8 h-8 rounded-full ${leader.avatar} flex items-center justify-center text-xs font-bold text-white shadow-lg`}>
+                            {leader.name.charAt(0)}
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm font-bold text-slate-200">{leader.name}</p>
+                            <p className="text-xs text-slate-500">{leader.deals} Deals Closed</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-sm font-mono font-bold text-emerald-400">${(leader.score / 1000).toFixed(1)}k</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const Dashboard: React.FC<DashboardProps> = ({ onRequestUpgrade }) => {
   // Load real data from storage
   const [leads] = useState<Lead[]>(() => loadOrDefault(LEADS_KEY, SEED_LEADS));
   const [projects] = useState<Project[]>(() => loadOrDefault(PROJECTS_KEY, SEED_PROJECTS));
@@ -61,14 +104,14 @@ const Dashboard: React.FC = () => {
   const closeRate = totalLeads > 0 ? Math.round((closedWon / totalLeads) * 100) : 0;
 
   return (
-    <div className="space-y-8 animate-fade-in pb-10 overflow-x-hidden w-full">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+    <div className="space-y-8 animate-fade-in pb-10">
+      <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-display font-bold text-slate-100">Solar Command Center</h2>
           <p className="text-slate-400 mt-1">Real-time pipeline & performance metrics.</p>
         </div>
         <div className="flex gap-3">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -81,7 +124,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Total Commissions" value={`$${(totalCommission/1000).toFixed(1)}k`} subtext="+12.5%" icon={DollarSign} color="text-emerald-400" />
         <StatCard title="Power Sold" value="145 kW" subtext="+45 kW" icon={Zap} color="text-solar-orange" />
         <StatCard title="Close Rate" value={`${closeRate}%`} subtext="+4%" icon={Activity} color="text-blue-400" />
@@ -96,7 +139,7 @@ const Dashboard: React.FC = () => {
                     <TrendingUp size={18} className="text-solar-orange"/> Commission Trajectory
                 </h3>
             </div>
-            <div style={{ width: '100%', height: 'auto', minWidth: 0 }} className="h-80">
+            <div style={{ width: '100%', height: 320, minWidth: 0 }}>
             <ResponsiveContainer width="99%" height="100%">
                 <AreaChart data={MOCK_CHART_DATA} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
@@ -137,45 +180,51 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* AI Insights Panel */}
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
-                    <Sparkles size={18} className="text-blue-400"/> Strategic Briefing
-                </h3>
-              </div>
-              
-              <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-                 {loadingInsights ? (
-                     <div className="flex flex-col items-center justify-center h-48 text-slate-500">
-                         <Loader2 size={24} className="animate-spin mb-2" />
-                         <p className="text-xs">Generating strategy...</p>
-                     </div>
-                 ) : insights.length > 0 ? (
-                    insights.map(insight => (
-                        <div key={insight.id} className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 hover:bg-slate-800/50 transition-colors">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider
-                                    ${insight.type === 'OPPORTUNITY' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                      insight.type === 'RISK' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 
-                                      'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
-                                    {insight.type}
-                                </span>
-                                <span className="text-[10px] text-slate-500 font-mono">Impact: {insight.impactScore}/10</span>
+          {/* AI Insights Panel OR Leaderboard based on Plan */}
+          <div className="flex flex-col gap-6">
+              {/* Leaderboard - A Gold Standard Feature */}
+              <LeaderboardWidget />
+
+              {/* Insights */}
+              <div className="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col flex-1 min-h-[250px]">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                        <Sparkles size={18} className="text-blue-400"/> Strategic Briefing
+                    </h3>
+                  </div>
+                  
+                  <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+                     {loadingInsights ? (
+                         <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                             <Loader2 size={24} className="animate-spin mb-2" />
+                             <p className="text-xs">Generating strategy...</p>
+                         </div>
+                     ) : insights.length > 0 ? (
+                        insights.map(insight => (
+                            <div key={insight.id} className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 hover:bg-slate-800/50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider
+                                        ${insight.type === 'OPPORTUNITY' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                                          insight.type === 'RISK' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 
+                                          'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                        {insight.type}
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 font-mono">Impact: {insight.impactScore}/10</span>
+                                </div>
+                                <h4 className="text-sm font-bold text-slate-200 mb-1">{insight.title}</h4>
+                                <p className="text-xs text-slate-400 mb-3">{insight.description}</p>
+                                <div className="flex items-center gap-2 text-xs text-solar-orange font-bold bg-solar-orange/5 p-2 rounded">
+                                    <ArrowRight size={12} />
+                                    {insight.actionItem}
+                                </div>
                             </div>
-                            <h4 className="text-sm font-bold text-slate-200 mb-1">{insight.title}</h4>
-                            <p className="text-xs text-slate-400 mb-3">{insight.description}</p>
-                            <div className="flex items-center gap-2 text-xs text-solar-orange font-bold bg-solar-orange/5 p-2 rounded">
-                                <ArrowRight size={12} />
-                                {insight.actionItem}
-                            </div>
-                        </div>
-                    ))
-                 ) : (
-                     <div className="text-center text-slate-500 text-sm py-10">
-                         No insights available. Add more leads to generate strategy.
-                     </div>
-                 )}
+                        ))
+                     ) : (
+                         <div className="text-center text-slate-500 text-sm py-10">
+                             No insights available.
+                         </div>
+                     )}
+                  </div>
               </div>
           </div>
       </div>

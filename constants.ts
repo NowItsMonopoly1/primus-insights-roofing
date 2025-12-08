@@ -45,6 +45,53 @@ export const AVATAR_OPTIONS = [
   { id: 'avatar-6', gradient: 'bg-gradient-to-br from-red-600 to-orange-600', label: 'Magma' },
 ];
 
+export const SUBSCRIPTION_PLANS = [
+  {
+    id: 'FREE',
+    name: 'Scout',
+    price: 0,
+    priceYearly: 0,
+    description: 'For new reps just getting started.',
+    features: ['Basic Lead Board', 'Manual Entry', 'Standard Commission Log', 'Project Tracker'],
+    highlight: false,
+    color: 'text-slate-400',
+    btnColor: 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+  },
+  {
+    id: 'PRO',
+    name: 'Closer',
+    price: 48,
+    priceYearly: 468, // ~20% off
+    description: 'For active reps who need to close NOW.',
+    features: ['AI Proposal Engine', 'Solar Intelligence (Roof Analysis)', 'Deal Copilot & Objection Scripts', 'Digital Contracts & E-Sign', 'Mobile Field Mode'],
+    highlight: true,
+    color: 'text-solar-orange',
+    btnColor: 'bg-solar-orange text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20'
+  },
+  {
+    id: 'TEAM',
+    name: 'Empire',
+    price: 198,
+    priceYearly: 1908,
+    description: 'For team leaders managing 2-10 reps.',
+    features: ['Everything in Closer', 'AI Lead Routing (Hot/Warm/Cold)', 'Team Dashboards & Analytics', 'Role-Based Permissions', 'JobNimbus Integration (Beta)'],
+    highlight: false,
+    color: 'text-emerald-400',
+    btnColor: 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg shadow-emerald-500/20'
+  },
+  {
+    id: 'DEALER',
+    name: 'Titan',
+    price: 498,
+    priceYearly: 4788,
+    description: 'Complete OS for Dealers & Installers.',
+    features: ['Everything in Empire', 'Unlimited Rep Seats', 'Multi-Market Routing', 'Compliance Shield (Ethics Audit)', 'White Label Options', 'API Access'],
+    highlight: false,
+    color: 'text-purple-400',
+    btnColor: 'bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-500/20'
+  }
+];
+
 export const SEED_LEADS: Lead[] = [
   {
     id: "L-001",
@@ -137,6 +184,10 @@ export const SEED_ANALYSES: SolarAnalysis[] = [
     systemSizeKw: 6.2,
     viabilityScore: 92,
     summary: "Excellent south-facing roof with minimal shading. Ideal for a 6–7 kW system.",
+    groundingUrls: [
+        "https://maps.google.com/?q=123+Sunridge+Dr+Antioch+CA",
+        "https://www.google.com/maps/contrib/12345"
+    ],
     systemCost: 6.2 * 3500, // $3.50/watt
     taxCredit30: 6.2 * 3500 * 0.3,
     netCost: 6.2 * 3500 * 0.7,

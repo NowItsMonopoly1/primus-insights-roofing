@@ -1,13 +1,18 @@
+
 import React, { useEffect, useState } from "react";
 import { loadOrDefault, save } from "../utils/storage";
 import { PROJECT_STAGES, STAGE_LABELS, SEED_PROJECTS, generateMilestoneCommissions, SEED_COMMISSIONS } from "../constants";
-import type { Project, Commission } from "../types";
+import type { Project, Commission, PlanId } from "../types";
 import { HardHat, CheckCircle2, ChevronRight, Activity } from "lucide-react";
 
 const PROJECTS_KEY = "primus_projects";
 const COMMISSIONS_KEY = "primus_commissions";
 
-export const ProjectTracker = () => {
+interface ProjectTrackerProps {
+  onRequestUpgrade: (plan: PlanId) => void;
+}
+
+export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade }) => {
   const [projects, setProjects] = useState<Project[]>(() =>
     loadOrDefault<Project[]>(PROJECTS_KEY, SEED_PROJECTS)
   );
@@ -45,8 +50,8 @@ export const ProjectTracker = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in overflow-x-hidden w-full">
-       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
+    <div className="space-y-6 animate-fade-in">
+       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
              <HardHat className="text-solar-orange" />
@@ -66,7 +71,7 @@ export const ProjectTracker = () => {
           <div className="divide-y divide-slate-800/50">
             {projects.map((p) => (
               <div key={p.id} className="p-6 hover:bg-slate-800/20 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                <div className="flex justify-between items-start mb-4">
                    <div>
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-xs font-bold text-slate-500 border border-slate-700 rounded px-1.5 py-0.5">{p.id}</span>
@@ -79,7 +84,7 @@ export const ProjectTracker = () => {
                       </div>
                    </div>
                    <button
-                    className="secondary-btn text-xs w-full sm:w-auto justify-center"
+                    className="secondary-btn text-xs"
                     onClick={() => advanceStage(p)}
                     disabled={p.stage === "PTO"}
                   >

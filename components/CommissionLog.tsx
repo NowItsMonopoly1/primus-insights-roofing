@@ -1,12 +1,17 @@
+
 import React, { useEffect, useMemo, useState } from "react";
 import { loadOrDefault, save } from "../utils/storage";
 import { SEED_COMMISSIONS, SEED_LEADS } from "../constants";
-import type { Commission } from "../types";
+import type { Commission, PlanId } from "../types";
 import { DollarSign, Wallet, CalendarClock, CheckCircle2 } from "lucide-react";
 
 const COMMISSIONS_KEY = "primus_commissions";
 
-export const CommissionLog = () => {
+interface CommissionLogProps {
+  onRequestUpgrade: (plan: PlanId) => void;
+}
+
+export const CommissionLog: React.FC<CommissionLogProps> = ({ onRequestUpgrade }) => {
   const [commissions, setCommissions] = useState<Commission[]>(() =>
     loadOrDefault<Commission[]>(COMMISSIONS_KEY, SEED_COMMISSIONS)
   );
@@ -37,8 +42,8 @@ export const CommissionLog = () => {
     leads.find((l) => l.id === leadId)?.name ?? leadId;
 
   return (
-    <div className="space-y-6 animate-fade-in overflow-x-hidden w-full">
-       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
+    <div className="space-y-6 animate-fade-in">
+       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
              <DollarSign className="text-emerald-500" />
@@ -48,13 +53,13 @@ export const CommissionLog = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
          <div className="glass-panel p-4 flex items-center gap-4 border border-slate-800">
              <div className="p-3 rounded-full bg-yellow-500/10 text-yellow-500">
                  <CalendarClock size={24} />
              </div>
              <div>
-                 <p className="text-xs text-slate-500 uppercase font-bold">Pending</p>
+                 <p className="text-xs text-slate-500 uppercase font-bold">Pending Payouts</p>
                  <p className="text-2xl font-mono font-bold text-slate-200">${totals.pending.toLocaleString()}</p>
              </div>
          </div>
@@ -63,7 +68,7 @@ export const CommissionLog = () => {
                  <Wallet size={24} />
              </div>
              <div>
-                 <p className="text-xs text-slate-500 uppercase font-bold">Paid</p>
+                 <p className="text-xs text-slate-500 uppercase font-bold">Total Paid</p>
                  <p className="text-2xl font-mono font-bold text-slate-200">${totals.paid.toLocaleString()}</p>
              </div>
          </div>
@@ -72,7 +77,7 @@ export const CommissionLog = () => {
                  <DollarSign size={24} />
              </div>
              <div>
-                 <p className="text-xs text-slate-500 uppercase font-bold">Lifetime</p>
+                 <p className="text-xs text-slate-500 uppercase font-bold">Lifetime Earnings</p>
                  <p className="text-2xl font-mono font-bold text-slate-200">${totals.total.toLocaleString()}</p>
              </div>
          </div>

@@ -1,5 +1,5 @@
 {
-  "name": "copy-of-primus-home-pro---solar-sales-os",
+  "name": "copy-of-copy-of-primus-home-pro---solar-sales-os",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@google/genai": "^1.31.0",
-    "@google/generative-ai": "^0.21.0",
     "recharts": "^3.5.1",
     "lucide-react": "^0.556.0",
     "react-markdown": "^10.1.0",
@@ -19,7 +18,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@vercel/node": "^3.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"

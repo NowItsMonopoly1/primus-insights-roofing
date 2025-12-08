@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { User, MapPin, Briefcase, Save, CheckCircle2, Shield, Camera } from 'lucide-react';
+import { User, MapPin, Briefcase, Save, CheckCircle2, Shield, Camera, Key } from 'lucide-react';
 import { UserProfile } from '../types';
 import { save } from '../utils/storage';
 import { AVATAR_OPTIONS } from '../constants';
@@ -40,8 +41,8 @@ export const UserProfileView: React.FC<UserProfileProps> = ({ profile, onUpdate 
   const selectedAvatar = AVATAR_OPTIONS.find(a => a.id === formData.avatarId);
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl mx-auto overflow-x-hidden w-full">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
+    <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
+      <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-display font-bold text-slate-100 flex items-center gap-3">
              <User className="text-solar-orange" />
@@ -147,6 +148,25 @@ export const UserProfileView: React.FC<UserProfileProps> = ({ profile, onUpdate 
                                     className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-3 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all"
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* API Key Section */}
+                    <div className="space-y-2 pt-2 border-t border-slate-800/50">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                            <Key size={12} /> Gemini API Key (For AI Features)
+                        </label>
+                        <div className="relative">
+                            <input 
+                                type="password" 
+                                placeholder="Paste your Google Gemini API Key to enable AI..."
+                                value={formData.apiKey || ''}
+                                onChange={(e) => setFormData({...formData, apiKey: e.target.value})}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-slate-200 text-xs font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-600"
+                            />
+                            <p className="text-[10px] text-slate-500 mt-1">
+                                Keys are saved locally in your browser. Get one at <a href="https://aistudiocdn.google.com" target="_blank" className="text-emerald-400 hover:underline">aistudio.google.com</a>.
+                            </p>
                         </div>
                     </div>
                 </div>
