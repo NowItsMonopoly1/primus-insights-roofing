@@ -7,6 +7,7 @@ import { loadOrDefault } from '../utils/storage';
 import { BusinessInsight, Lead, Project, PlanId, Commission } from '../types';
 import { generateBusinessInsights } from '../services/geminiService';
 import { hasAccess } from '../utils/plan';
+import RevenueForecast from './RevenueForecast';
 
 const LEADS_KEY = "primus_leads";
 const PROJECTS_KEY = "primus_projects";
@@ -388,6 +389,33 @@ const Dashboard: React.FC<DashboardProps> = ({ onRequestUpgrade }) => {
             <p className="text-sm text-slate-500 text-center py-4">No payouts yet</p>
           )}
         </DashboardCard>
+      </div>
+
+      {/* Revenue Forecast Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <RevenueForecast leads={leads} projects={projects} commissions={commissions} />
+        </div>
+        <div className="space-y-6">
+          {/* Quick Forecast Summary */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <h4 className="text-sm font-bold text-slate-300 mb-3">Pipeline Health</h4>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Active Leads</span>
+                <span className="text-sm font-mono text-blue-400">{leads.filter(l => l.status !== 'CLOSED_WON' && l.status !== 'CLOSED_LOST').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">In Progress Projects</span>
+                <span className="text-sm font-mono text-purple-400">{projects.filter(p => p.stage !== 'PTO').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-500">Pending Payouts</span>
+                <span className="text-sm font-mono text-amber-400">{commissions.filter(c => c.status === 'PENDING' || c.status === 'APPROVED').length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
