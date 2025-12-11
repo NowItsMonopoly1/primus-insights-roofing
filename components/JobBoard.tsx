@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { MOCK_LEADS } from '../constants';
 import { LeadStatus, Lead, UserProfile, PlanId } from '../types';
-import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone, Eye, Zap } from 'lucide-react';
+import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone, Eye, Zap, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { loadOrDefault, save } from '../utils/storage';
 import { routeLead } from '../services/geminiService';
 import { hasAccess } from '../utils/plan';
 import { scoreLead, getScoreColor } from '../services/leadIntelligence';
+import { applyFilters, applySorting, SortField, SortDirection } from '../utils/leadFilters';
 import LeadDetailsDrawer from './LeadDetailsDrawer';
 
 const LEADS_KEY = "primus_leads";
@@ -34,6 +35,15 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
   
   // Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Sorting State
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Enhanced Filter State
+  const [highValueOnly, setHighValueOnly] = useState(false);
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [repFilter, setRepFilter] = useState('all');
 
   // Check Permissions using Utility
   const canUseRouter = hasAccess(userProfile.plan as PlanId, 'leadRouting');
@@ -175,12 +185,33 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     setPreviewPriority(null);
   };
 
-  const filteredLeads = leads.filter((lead) => {
-    const statusMatch = filter === "ALL" ? true : lead.status === filter;
-    const searchMatch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        lead.address.toLowerCase().includes(searchTerm.toLowerCase());
-    return statusMatch && searchMatch;
+  // Sorting toggle helper
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Get sort indicator for column headers
+  const getSortIndicator = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown size={12} className="text-slate-600" />;
+    return sortDirection === 'asc' 
+      ? <ArrowUp size={12} className="text-solar-orange" />
+      : <ArrowDown size={12} className="text-solar-orange" />;
+  };
+
+  // Apply filters and sorting pipeline
+  let processedLeads = applyFilters(leads, {
+    filter,
+    searchTerm,
+    highValueOnly,
+    priorityFilter,
+    repFilter
   });
+  processedLeads = applySorting(processedLeads, sortField, sortDirection);
 
   const getStatusColor = (status: string) => {
       switch(status) {
@@ -237,23 +268,94 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
           </div>
         </div>
 
+        {/* Enhanced Filters Row */}
+        <div className="px-4 py-3 border-b border-slate-800 flex flex-wrap items-center gap-4 bg-slate-900/30">
+          <label className="flex items-center gap-2 text-slate-300 text-sm cursor-pointer hover:text-white transition-colors">
+            <input
+              type="checkbox"
+              checked={highValueOnly}
+              onChange={(e) => setHighValueOnly(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-solar-orange focus:ring-solar-orange focus:ring-offset-slate-900"
+            />
+            <span>High Value ($200+)</span>
+          </label>
+
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 text-xs uppercase tracking-wider">Priority:</span>
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value as any)}
+              className="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-solar-orange cursor-pointer"
+            >
+              <option value="all">All</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 text-xs uppercase tracking-wider">Rep:</span>
+            <select
+              value={repFilter}
+              onChange={(e) => setRepFilter(e.target.value)}
+              disabled
+              className="bg-slate-950 border border-slate-800 text-slate-500 rounded-lg px-2.5 py-1.5 text-sm cursor-not-allowed opacity-60"
+              title="Coming soon"
+            >
+              <option value="all">All Reps</option>
+            </select>
+            <span className="text-[10px] text-slate-600 italic">Soon</span>
+          </div>
+
+          <div className="ml-auto text-xs text-slate-500">
+            {processedLeads.length} lead{processedLeads.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto min-h-[400px]">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-900/80 text-slate-400 font-medium uppercase text-xs tracking-wider">
               <tr>
-                <th className="px-6 py-4">Homeowner</th>
-                <th className="px-6 py-4 flex items-center gap-2">
-                    Lead IQ 
-                    {!canUseRouter && <Lock size={12} className="text-slate-600" />}
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:text-slate-200 transition-colors select-none"
+                  onClick={() => toggleSort('name')}
+                >
+                  <div className="flex items-center gap-1.5">
+                    Homeowner {getSortIndicator('name')}
+                  </div>
                 </th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Est. Bill</th>
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:text-slate-200 transition-colors select-none"
+                  onClick={() => toggleSort('aiScore')}
+                >
+                  <div className="flex items-center gap-1.5">
+                    Lead IQ {getSortIndicator('aiScore')}
+                    {!canUseRouter && <Lock size={12} className="text-slate-600" />}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:text-slate-200 transition-colors select-none"
+                  onClick={() => toggleSort('status')}
+                >
+                  <div className="flex items-center gap-1.5">
+                    Status {getSortIndicator('status')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-4 cursor-pointer hover:text-slate-200 transition-colors select-none"
+                  onClick={() => toggleSort('estimatedBill')}
+                >
+                  <div className="flex items-center gap-1.5">
+                    Est. Bill {getSortIndicator('estimatedBill')}
+                  </div>
+                </th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
-              {filteredLeads.map((lead) => {
+              {processedLeads.map((lead) => {
                 return (
                   <tr key={lead.id} className="hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
@@ -359,7 +461,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
 
         {/* Mobile Card View */}
         <div className="md:hidden p-4 space-y-4 min-h-[400px]">
-             {filteredLeads.map((lead) => (
+             {processedLeads.map((lead) => (
                  <div key={lead.id} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 active:scale-[0.98] transition-transform" onClick={(e) => handleOpenEdit(e, lead)}>
                     <div className="flex justify-between items-start mb-3">
                         <div>
