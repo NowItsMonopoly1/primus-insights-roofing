@@ -90,15 +90,18 @@ export interface BusinessInsight {
   impactScore: number; // 1-10
 }
 
-export type CommissionStatus = "PENDING" | "PAID";
+export type CommissionStatus = "PENDING" | "APPROVED" | "PAID";
 
 export interface Commission {
   id: string;
   leadId: string;
+  dealName?: string;
   amountUsd: number;
   status: CommissionStatus;
   milestone: ProjectStage | "SIGNED";
   expectedPayDate?: string;
+  paidAt?: string;
+  payoutMethod?: string;
 }
 
 export type PlanId = "FREE" | "PRO" | "TEAM" | "DEALER";

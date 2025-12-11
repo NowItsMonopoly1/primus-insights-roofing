@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { MOCK_CHART_DATA, SEED_LEADS, SEED_PROJECTS } from '../constants';
-import { DollarSign, Zap, Activity, Briefcase, TrendingUp, Sparkles, AlertTriangle, ArrowRight, Loader2, Trophy, Crown, Medal } from 'lucide-react';
+import { MOCK_CHART_DATA, SEED_LEADS, SEED_PROJECTS, SEED_COMMISSIONS } from '../constants';
+import { DollarSign, Zap, Activity, Briefcase, TrendingUp, Sparkles, AlertTriangle, ArrowRight, Loader2, Trophy, Crown, Medal, Users, Clock, CheckCircle2, Target } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { loadOrDefault } from '../utils/storage';
-import { BusinessInsight, Lead, Project, PlanId } from '../types';
+import { BusinessInsight, Lead, Project, PlanId, Commission } from '../types';
 import { generateBusinessInsights } from '../services/geminiService';
 import { hasAccess } from '../utils/plan';
 
@@ -15,6 +15,48 @@ const COMMISSIONS_KEY = "primus_commissions";
 interface DashboardProps {
   onRequestUpgrade: (plan: PlanId) => void;
 }
+
+// KPI Card Component
+const KPICard: React.FC<{ title: string; value: string | number; icon: React.ElementType; colorClass: string; alert?: boolean }> = ({ title, value, icon: Icon, colorClass, alert }) => (
+  <div className={`bg-slate-900 border p-4 rounded-xl hover:border-slate-700 transition-all ${alert ? 'border-red-500/50' : 'border-slate-800'}`}>
+    <div className="flex items-center gap-3">
+      <div className={`p-2.5 rounded-lg ${colorClass.replace('text-', 'bg-').replace('-400', '-500/10')}`}>
+        <Icon size={18} className={colorClass} />
+      </div>
+      <div>
+        <p className="text-slate-500 text-xs uppercase tracking-wider font-medium">{title}</p>
+        <p className={`text-2xl font-mono font-bold ${colorClass}`}>{value}</p>
+      </div>
+    </div>
+  </div>
+);
+
+// Dashboard Card Widget
+const DashboardCard: React.FC<{ title: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, icon: Icon, children }) => (
+  <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-all">
+    <div className="flex items-center gap-2 mb-4">
+      <Icon size={18} className="text-solar-orange" />
+      <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wide">{title}</h3>
+    </div>
+    {children}
+  </div>
+);
+
+// Horizontal Bar Chart Component
+const BarChart: React.FC<{ label: string; value: number; max: number; color: string }> = ({ label, value, max, color }) => (
+  <div className="space-y-1">
+    <div className="flex justify-between text-xs">
+      <span className="text-slate-400">{label}</span>
+      <span className="text-slate-300 font-mono">{value}</span>
+    </div>
+    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+      <div
+        className={`h-full ${color} rounded-full transition-all duration-500`}
+        style={{ width: `${Math.max((value / max) * 100, 4)}%` }}
+      />
+    </div>
+  </div>
+);
 
 const StatCard: React.FC<{ title: string; value: string; subtext: string; icon: React.ElementType; color: string }> = ({ title, value, subtext, icon: Icon, color }) => (
   <div className="glass-panel p-6 rounded-2xl shadow-lg border border-slate-800 hover:border-slate-700 transition-all group relative overflow-hidden">
@@ -79,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onRequestUpgrade }) => {
   // Load real data from storage
   const [leads] = useState<Lead[]>(() => loadOrDefault(LEADS_KEY, SEED_LEADS));
   const [projects] = useState<Project[]>(() => loadOrDefault(PROJECTS_KEY, SEED_PROJECTS));
-  const [commissions] = useState<any[]>(() => loadOrDefault(COMMISSIONS_KEY, []));
+  const [commissions] = useState<any[]>(() => loadOrDefault(COMMISSIONS_KEY, SEED_COMMISSIONS));
   
   const [insights, setInsights] = useState<BusinessInsight[]>([]);
   const [loadingInsights, setLoadingInsights] = useState(false);
@@ -97,11 +139,70 @@ const Dashboard: React.FC<DashboardProps> = ({ onRequestUpgrade }) => {
 
   const totalLeads = leads.length;
   const closedWon = leads.filter(l => l.status === 'CLOSED_WON').length;
-  const activeProjects = projects.length;
-  const totalCommission = commissions.reduce((sum, c) => sum + c.amountUsd, 0);
+  const activeProjects = projects.filter(p => p.stage !== 'PTO').length;
+  const totalCommission = commissions.reduce((sum, c) => sum + (c.amountUsd || 0), 0);
 
   // Approximate Close Rate
   const closeRate = totalLeads > 0 ? Math.round((closedWon / totalLeads) * 100) : 0;
+
+  // === KPI CALCULATIONS ===
+  
+  // New Leads This Week
+  const newLeadsThisWeek = leads.filter((l) => {
+    const created = new Date(l.createdAt);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return created >= weekAgo;
+  }).length;
+
+  // High Priority Leads
+  const highPriorityCount = leads.filter((l) => l.priority === 'high').length;
+
+  // Projects At Risk (SLA)
+  const projectsAtRisk = projects.filter((p) => p.slaStatus === 'atRisk').length;
+  const projectsLate = projects.filter((p) => p.slaStatus === 'late').length;
+  const projectsOnTrack = projects.filter((p) => p.slaStatus === 'onTrack').length;
+
+  // Revenue Earned This Month (Paid Commissions)
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const revenueThisMonth = commissions
+    .filter((c) => {
+      if (c.status !== 'PAID') return false;
+      const paidAt = c.paidAt;
+      if (!paidAt) return false;
+      const paidDate = new Date(paidAt);
+      return paidDate.getMonth() === currentMonth && paidDate.getFullYear() === currentYear;
+    })
+    .reduce((sum, c) => sum + (c.amountUsd || 0), 0);
+
+  // Lead Pipeline Counts
+  const pipelineCounts = {
+    NEW: leads.filter(l => l.status === 'NEW').length,
+    QUALIFIED: leads.filter(l => l.status === 'QUALIFIED').length,
+    PROPOSAL_SENT: leads.filter(l => l.status === 'PROPOSAL_SENT').length,
+    CLOSED_WON: leads.filter(l => l.status === 'CLOSED_WON').length,
+    CLOSED_LOST: leads.filter(l => l.status === 'CLOSED_LOST').length,
+  };
+  const maxPipeline = Math.max(...Object.values(pipelineCounts), 1);
+
+  // Commission Status Counts
+  const commissionCounts = {
+    PENDING: commissions.filter(c => c.status === 'PENDING').length,
+    APPROVED: commissions.filter(c => c.status === 'APPROVED').length,
+    PAID: commissions.filter(c => c.status === 'PAID').length,
+  };
+  const maxCommission = Math.max(...Object.values(commissionCounts), 1);
+
+  // Recent Activity
+  const recentLeads = [...leads]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
+
+  const recentPayouts = commissions
+    .filter(c => c.status === 'PAID' && c.paidAt)
+    .sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime())
+    .slice(0, 5);
 
   return (
     <div className="space-y-8 animate-fade-in pb-10">
@@ -124,11 +225,169 @@ const Dashboard: React.FC<DashboardProps> = ({ onRequestUpgrade }) => {
         </div>
       </div>
 
+      {/* KPI Cards Row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <KPICard 
+          title="New Leads This Week" 
+          value={newLeadsThisWeek.toString()} 
+          icon={Users}
+          colorClass="text-blue-400"
+        />
+        <KPICard 
+          title="High Priority" 
+          value={highPriorityCount.toString()} 
+          icon={AlertTriangle}
+          colorClass="text-red-400"
+          alert={highPriorityCount > 3}
+        />
+        <KPICard 
+          title="Active Projects" 
+          value={activeProjects.toString()} 
+          icon={Briefcase}
+          colorClass="text-purple-400"
+        />
+        <KPICard 
+          title="At Risk / Late" 
+          value={`${projectsAtRisk} / ${projectsLate}`} 
+          icon={Clock}
+          colorClass="text-amber-400"
+          alert={projectsAtRisk + projectsLate > 0}
+        />
+        <KPICard 
+          title="Revenue This Month" 
+          value={`$${(revenueThisMonth/1000).toFixed(1)}k`} 
+          icon={DollarSign}
+          colorClass="text-emerald-400"
+        />
+      </div>
+
+      {/* Original Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Total Commissions" value={`$${(totalCommission/1000).toFixed(1)}k`} subtext="+12.5%" icon={DollarSign} color="text-emerald-400" />
         <StatCard title="Power Sold" value="145 kW" subtext="+45 kW" icon={Zap} color="text-solar-orange" />
         <StatCard title="Close Rate" value={`${closeRate}%`} subtext="+4%" icon={Activity} color="text-blue-400" />
         <StatCard title="Pipeline" value={totalLeads.toString()} subtext={`+${activeProjects} active projects`} icon={Briefcase} color="text-purple-400" />
+      </div>
+
+      {/* Analytics Widgets Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Lead Pipeline Widget */}
+        <DashboardCard title="Lead Pipeline" icon={TrendingUp}>
+          <div className="space-y-3">
+            <BarChart label="New" value={pipelineCounts.NEW} max={maxPipeline} color="bg-blue-500" />
+            <BarChart label="Qualified" value={pipelineCounts.QUALIFIED} max={maxPipeline} color="bg-cyan-500" />
+            <BarChart label="Proposal Sent" value={pipelineCounts.PROPOSAL_SENT} max={maxPipeline} color="bg-purple-500" />
+            <BarChart label="Closed Won" value={pipelineCounts.CLOSED_WON} max={maxPipeline} color="bg-emerald-500" />
+            <BarChart label="Closed Lost" value={pipelineCounts.CLOSED_LOST} max={maxPipeline} color="bg-red-500" />
+          </div>
+        </DashboardCard>
+
+        {/* Project SLA Status Widget */}
+        <DashboardCard title="Project SLA Status" icon={Clock}>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                <span className="text-sm text-slate-300">On Track</span>
+              </div>
+              <span className="text-lg font-bold text-emerald-400">
+                {projects.filter(p => p.slaStatus === 'onTrack' || !p.slaStatus).length}
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                <span className="text-sm text-slate-300">At Risk</span>
+              </div>
+              <span className="text-lg font-bold text-amber-400">{projectsAtRisk}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <span className="text-sm text-slate-300">Late</span>
+              </div>
+              <span className="text-lg font-bold text-red-400">{projectsLate}</span>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* Commission Status Widget */}
+        <DashboardCard title="Commission Status" icon={DollarSign}>
+          <div className="space-y-3">
+            <BarChart label="Pending" value={commissionCounts.PENDING} max={maxCommission} color="bg-amber-500" />
+            <BarChart label="Approved" value={commissionCounts.APPROVED} max={maxCommission} color="bg-blue-500" />
+            <BarChart label="Paid" value={commissionCounts.PAID} max={maxCommission} color="bg-emerald-500" />
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-700">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">Pending Value</span>
+              <span className="font-bold text-amber-400">
+                ${commissions.filter(c => c.status === 'PENDING').reduce((s, c) => s + (c.amountUsd || 0), 0).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </DashboardCard>
+      </div>
+
+      {/* Recent Activity Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Leads */}
+        <DashboardCard title="Recent Leads" icon={Users}>
+          {recentLeads.length > 0 ? (
+            <div className="space-y-2">
+              {recentLeads.map(lead => (
+                <div key={lead.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors">
+                  <div>
+                    <p className="text-sm font-medium text-slate-200">{lead.name}</p>
+                    <p className="text-xs text-slate-500">{new Date(lead.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {lead.priority === 'high' && (
+                      <span className="px-2 py-0.5 text-xs bg-red-500/20 text-red-400 rounded">High</span>
+                    )}
+                    <span className={`px-2 py-0.5 text-xs rounded ${
+                      lead.status === 'NEW' ? 'bg-blue-500/20 text-blue-400' :
+                      lead.status === 'QUALIFIED' ? 'bg-cyan-500/20 text-cyan-400' :
+                      lead.status === 'PROPOSAL_SENT' ? 'bg-purple-500/20 text-purple-400' :
+                      lead.status === 'CLOSED_WON' ? 'bg-emerald-500/20 text-emerald-400' :
+                      'bg-red-500/20 text-red-400'
+                    }`}>
+                      {lead.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500 text-center py-4">No leads yet</p>
+          )}
+        </DashboardCard>
+
+        {/* Recent Payouts */}
+        <DashboardCard title="Recent Payouts" icon={DollarSign}>
+          {recentPayouts.length > 0 ? (
+            <div className="space-y-2">
+              {recentPayouts.map(payout => (
+                <div key={payout.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors">
+                  <div>
+                    <p className="text-sm font-medium text-slate-200">{payout.dealName}</p>
+                    <p className="text-xs text-slate-500">{payout.paidAt ? new Date(payout.paidAt).toLocaleDateString() : ''}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-emerald-400">${payout.amountUsd?.toLocaleString()}</span>
+                    {payout.payoutMethod && (
+                      <span className="px-2 py-0.5 text-xs bg-slate-700 text-slate-300 rounded">
+                        {payout.payoutMethod}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500 text-center py-4">No payouts yet</p>
+          )}
+        </DashboardCard>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
