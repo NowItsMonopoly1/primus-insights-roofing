@@ -29,6 +29,8 @@ export interface Lead {
   aiScore?: number;
   aiTags?: string[];
   priority?: 'low' | 'medium' | 'high';
+  // Assigned Rep
+  assignedTo?: string | null;
 }
 
 export type ProjectStage =

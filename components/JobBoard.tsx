@@ -164,7 +164,8 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
       createdAt: new Date().toISOString().slice(0, 10),
       aiScore: analysis.score,
       aiTags: analysis.tags,
-      priority: analysis.priority
+      priority: analysis.priority,
+      assignedTo: null
     };
 
     let finalLead = baseLead;
@@ -201,6 +202,17 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     return sortDirection === 'asc' 
       ? <ArrowUp size={12} className="text-solar-orange" />
       : <ArrowDown size={12} className="text-solar-orange" />;
+  };
+
+  // Available reps for assignment
+  const REPS = ['Donte', 'Maria', 'Jason', 'Ava'];
+
+  // Handle rep assignment
+  const handleAssignRep = (id: string, repName: string) => {
+    const updated = leads.map((l) =>
+      l.id === id ? { ...l, assignedTo: repName === 'Unassigned' ? null : repName } : l
+    );
+    setLeads(updated);
   };
 
   // Apply filters and sorting pipeline
@@ -299,13 +311,14 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
             <select
               value={repFilter}
               onChange={(e) => setRepFilter(e.target.value)}
-              disabled
-              className="bg-slate-950 border border-slate-800 text-slate-500 rounded-lg px-2.5 py-1.5 text-sm cursor-not-allowed opacity-60"
-              title="Coming soon"
+              className="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-solar-orange cursor-pointer"
             >
               <option value="all">All Reps</option>
+              <option value="Donte">Donte</option>
+              <option value="Maria">Maria</option>
+              <option value="Jason">Jason</option>
+              <option value="Ava">Ava</option>
             </select>
-            <span className="text-[10px] text-slate-600 italic">Soon</span>
           </div>
 
           <div className="ml-auto text-xs text-slate-500">
@@ -351,6 +364,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                     Est. Bill {getSortIndicator('estimatedBill')}
                   </div>
                 </th>
+                <th className="px-6 py-4">Assigned Rep</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -435,6 +449,19 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                           <Battery size={14} className="text-solar-orange"/>
                           <span className="font-mono font-bold text-slate-300">${lead.estimatedBill}</span>
                        </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={lead.assignedTo || 'Unassigned'}
+                        onChange={(e) => handleAssignRep(lead.id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-solar-orange cursor-pointer"
+                      >
+                        <option value="Unassigned">Unassigned</option>
+                        {REPS.map(rep => (
+                          <option key={rep} value={rep}>{rep}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center gap-2 justify-end">

@@ -51,9 +51,9 @@ export function applyFilters(leads: Lead[], options: FilterOptions): Lead[] {
       if (leadPriority !== priorityFilter) return false;
     }
 
-    // Rep filter (future-safe - if lead has assignedRep field)
+    // Rep filter
     if (repFilter !== 'all') {
-      const leadRep = (lead as any).assignedRep ?? '';
+      const leadRep = lead.assignedTo ?? null;
       if (leadRep !== repFilter) return false;
     }
 

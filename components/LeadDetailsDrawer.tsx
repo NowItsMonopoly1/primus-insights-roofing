@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, MapPin, DollarSign, Calendar, FileText, Flame, Tag, Brain, Zap } from 'lucide-react';
+import { X, User, MapPin, DollarSign, Calendar, FileText, Flame, Tag, Brain, Zap, UserCheck } from 'lucide-react';
 import { Lead } from '../types';
 import { getScoreColor, getPriorityColor } from '../services/leadIntelligence';
 
@@ -141,6 +141,21 @@ const LeadDetailsDrawer: React.FC<LeadDetailsDrawerProps> = ({ open, lead, onClo
                 </div>
               </div>
             )}
+
+            {/* Assigned Rep */}
+            <div className="glass-panel p-4 rounded-xl border border-slate-800">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <UserCheck size={16} className="text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Assigned Rep</p>
+                  <p className={`mt-0.5 font-medium ${lead.assignedTo ? 'text-purple-400' : 'text-slate-500'}`}>
+                    {lead.assignedTo ?? 'Unassigned'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* AI Insights Section (Future-Proofed) */}
