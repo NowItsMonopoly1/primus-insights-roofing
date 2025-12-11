@@ -26,7 +26,13 @@ import {
   Briefcase,
   Star,
   AlertCircle,
+  GitBranch,
+  Timer,
+  Sliders,
 } from 'lucide-react';
+import PipelineEditor from './PipelineEditor';
+import SLAEditor from './SLAEditor';
+import CustomFieldsEditor from './CustomFieldsEditor';
 import {
   getActiveCompany,
   updateCompany,
@@ -58,7 +64,7 @@ interface Props {
   userProfile: UserProfile;
 }
 
-type TabType = 'profile' | 'teams' | 'reps' | 'installers' | 'permissions';
+type TabType = 'profile' | 'teams' | 'reps' | 'installers' | 'permissions' | 'pipeline' | 'sla' | 'customFields';
 
 export default function CompanySettings({ userProfile }: Props) {
   const [company, setCompany] = useState<Company | null>(null);
@@ -203,6 +209,9 @@ export default function CompanySettings({ userProfile }: Props) {
     { id: 'reps', label: 'Reps Directory', icon: <UserPlus size={16} /> },
     { id: 'installers', label: 'Installers', icon: <HardHat size={16} /> },
     { id: 'permissions', label: 'Permissions', icon: <Shield size={16} /> },
+    { id: 'pipeline', label: 'Pipeline Stages', icon: <GitBranch size={16} /> },
+    { id: 'sla', label: 'SLA Rules', icon: <Timer size={16} /> },
+    { id: 'customFields', label: 'Custom Fields', icon: <Sliders size={16} /> },
   ];
 
   return (
@@ -892,6 +901,15 @@ export default function CompanySettings({ userProfile }: Props) {
             </div>
           </div>
         )}
+
+        {/* PIPELINE STAGES TAB */}
+        {activeTab === 'pipeline' && <PipelineEditor />}
+
+        {/* SLA RULES TAB */}
+        {activeTab === 'sla' && <SLAEditor />}
+
+        {/* CUSTOM FIELDS TAB */}
+        {activeTab === 'customFields' && <CustomFieldsEditor />}
       </div>
     </div>
   );
