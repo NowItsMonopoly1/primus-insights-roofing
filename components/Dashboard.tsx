@@ -10,6 +10,7 @@ import { hasAccess } from '../utils/plan';
 import RevenueForecast from './RevenueForecast';
 import InstallerIntelligence from './InstallerIntelligence';
 import CompanyHealthScore from './CompanyHealthScore';
+import AICopilot from './AICopilot';
 
 const LEADS_KEY = "primus_leads";
 const PROJECTS_KEY = "primus_projects";
@@ -258,6 +259,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onRequestUpgrade }) => {
           </div>
         </div>
       </div>
+
+      {/* AI Copilot - Real-time Advisor */}
+      <AICopilot leads={leads} projects={projects} commissions={commissions} healthScore={closeRate} />
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
