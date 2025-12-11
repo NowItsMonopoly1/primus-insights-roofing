@@ -48,6 +48,10 @@ export interface Project {
   kW: number;
   createdAt: string;
   lastUpdated: string;
+  // SLA Tracking fields
+  targetDates?: { [stage: string]: string };
+  actualDates?: { [stage: string]: string };
+  slaStatus?: 'onTrack' | 'atRisk' | 'late';
 }
 
 export interface SolarAnalysis {
