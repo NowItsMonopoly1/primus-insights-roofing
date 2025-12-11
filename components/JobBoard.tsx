@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { MOCK_LEADS } from '../constants';
 import { LeadStatus, Lead, UserProfile, PlanId } from '../types';
-import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone } from 'lucide-react';
+import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone, Eye } from 'lucide-react';
 import { loadOrDefault, save } from '../utils/storage';
 import { routeLead } from '../services/geminiService';
-import { hasAccess } from '../utils/plan'; // Import gating logic
+import { hasAccess } from '../utils/plan';
+import LeadDetailsDrawer from './LeadDetailsDrawer';
 
 const LEADS_KEY = "primus_leads";
 
@@ -25,6 +26,10 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRouting, setIsRouting] = useState(false);
+  
+  // Drawer State
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
   // Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -50,6 +55,11 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
       setEditingId(null);
       setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
       setIsModalOpen(true);
+  };
+
+  const openLeadDetails = (lead: Lead) => {
+      setSelectedLead(lead);
+      setIsDrawerOpen(true);
   };
 
   const handleOpenEdit = (e: React.MouseEvent, lead: Lead) => {
@@ -247,12 +257,20 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                        </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={(e) => handleOpenEdit(e, lead)}
-                        className="text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border border-transparent hover:border-slate-600 flex items-center gap-2 ml-auto"
-                      >
-                        <Edit2 size={12} /> Edit
-                      </button>
+                      <div className="flex items-center gap-2 justify-end">
+                        <button 
+                          onClick={() => openLeadDetails(lead)}
+                          className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border border-transparent hover:border-emerald-500/30 flex items-center gap-2"
+                        >
+                          <Eye size={12} /> View
+                        </button>
+                        <button 
+                          onClick={(e) => handleOpenEdit(e, lead)}
+                          className="text-slate-400 hover:text-white hover:bg-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border border-transparent hover:border-slate-600 flex items-center gap-2"
+                        >
+                          <Edit2 size={12} /> Edit
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -437,6 +455,13 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
             </div>
         </div>
       )}
+
+      {/* Lead Details Drawer */}
+      <LeadDetailsDrawer
+        open={isDrawerOpen}
+        lead={selectedLead}
+        onClose={() => setIsDrawerOpen(false)}
+      />
     </div>
   );
 };
