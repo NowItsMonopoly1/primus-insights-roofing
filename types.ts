@@ -52,6 +52,8 @@ export interface Project {
   targetDates?: { [stage: string]: string };
   actualDates?: { [stage: string]: string };
   slaStatus?: 'onTrack' | 'atRisk' | 'late';
+  // Installer assignment
+  installerName?: string;
 }
 
 export interface SolarAnalysis {

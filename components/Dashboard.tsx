@@ -8,6 +8,7 @@ import { BusinessInsight, Lead, Project, PlanId, Commission } from '../types';
 import { generateBusinessInsights } from '../services/geminiService';
 import { hasAccess } from '../utils/plan';
 import RevenueForecast from './RevenueForecast';
+import InstallerIntelligence from './InstallerIntelligence';
 
 const LEADS_KEY = "primus_leads";
 const PROJECTS_KEY = "primus_projects";
@@ -515,6 +516,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onRequestUpgrade }) => {
               </div>
           </div>
       </div>
+
+      {/* Installer Intelligence Dashboard */}
+      <InstallerIntelligence projects={projects} />
     </div>
   );
 };
