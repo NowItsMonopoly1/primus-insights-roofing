@@ -2,13 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { MOCK_LEADS } from '../constants';
 import { LeadStatus, Lead, UserProfile, PlanId } from '../types';
-import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone, Eye, Zap, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone, Eye, Zap, ArrowUpDown, ArrowUp, ArrowDown, Sliders } from 'lucide-react';
 import { loadOrDefault, save } from '../utils/storage';
 import { routeLead } from '../services/geminiService';
 import { hasAccess } from '../utils/plan';
 import { scoreLead, getScoreColor } from '../services/leadIntelligence';
 import { applyFilters, applySorting, SortField, SortDirection } from '../utils/leadFilters';
 import LeadDetailsDrawer from './LeadDetailsDrawer';
+import { getLeadFields, CustomField } from '../services/customFields';
+import { getActiveCompanyId } from '../services/companyStore';
+import CustomFieldRenderer from './CustomFieldRenderer';
 
 const LEADS_KEY = "primus_leads";
 
@@ -45,6 +48,18 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [repFilter, setRepFilter] = useState('all');
 
+  // Custom Fields State
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
+  const [showCustomFields, setShowCustomFields] = useState(false);
+
+  // Load custom fields on mount
+  useEffect(() => {
+    const companyId = getActiveCompanyId();
+    const fields = getLeadFields(companyId);
+    setCustomFields(fields);
+  }, []);
+
   // Check Permissions using Utility
   const canUseRouter = hasAccess(userProfile.plan as PlanId, 'leadRouting');
 
@@ -70,6 +85,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
   const handleOpenCreate = () => {
       setEditingId(null);
       setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+      setCustomFieldValues({});
       setPreviewAiScore(null);
       setPreviewAiTags([]);
       setPreviewPriority(null);
@@ -104,6 +120,8 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
           age: lead.age?.toString() || '',
           notes: lead.notes || ''
       });
+      // Load custom field values from lead
+      setCustomFieldValues((lead as any).customFields || {});
       // Populate existing AI scores if available
       setPreviewAiScore(lead.aiScore ?? null);
       setPreviewAiTags(lead.aiTags ?? []);
@@ -121,7 +139,8 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
             address: formData.address,
             estimatedBill: Number(formData.estimatedBill) || 0,
             age: formData.age ? Number(formData.age) : undefined,
-            notes: formData.notes
+            notes: formData.notes,
+            customFields: customFieldValues
         };
         // Re-run AI scoring on edit
         const updatedAnalysis = scoreLead(updatedLeadData);
@@ -137,6 +156,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
         setIsModalOpen(false);
         setEditingId(null);
         setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+        setCustomFieldValues({});
         setPreviewAiScore(null);
         setPreviewAiTags([]);
         setPreviewPriority(null);
@@ -165,8 +185,10 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
       aiScore: analysis.score,
       aiTags: analysis.tags,
       priority: analysis.priority,
-      assignedTo: null
-    };
+      assignedTo: null,
+      customFields: customFieldValues,
+      companyId: getActiveCompanyId()
+    } as Lead;
 
     let finalLead = baseLead;
 
@@ -181,6 +203,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     setLeads([finalLead, ...leads]);
     setIsModalOpen(false);
     setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+    setCustomFieldValues({});
     setPreviewAiScore(null);
     setPreviewAiTags([]);
     setPreviewPriority(null);
@@ -638,6 +661,35 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                             />
                         </div>
                     </div>
+
+                    {/* Custom Fields Section */}
+                    {customFields.length > 0 && (
+                      <div className="border-t border-slate-800 pt-4">
+                        <button
+                          type="button"
+                          onClick={() => setShowCustomFields(!showCustomFields)}
+                          className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors mb-3"
+                        >
+                          <Sliders size={14} />
+                          Custom Fields ({customFields.length})
+                          <ChevronRight size={14} className={`transform transition-transform ${showCustomFields ? 'rotate-90' : ''}`} />
+                        </button>
+                        
+                        {showCustomFields && (
+                          <div className="space-y-4 animate-fade-in">
+                            {customFields.map((field) => (
+                              <CustomFieldRenderer
+                                key={field.id}
+                                field={field}
+                                value={customFieldValues[field.key]}
+                                onChange={(key, value) => setCustomFieldValues(prev => ({ ...prev, [key]: value }))}
+                                disabled={isRouting}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Run Intelligence Button & Preview */}
                     <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-4 space-y-3">

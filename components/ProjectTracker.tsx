@@ -3,20 +3,13 @@ import React, { useEffect, useState } from "react";
 import { loadOrDefault, save } from "../utils/storage";
 import { PROJECT_STAGES, STAGE_LABELS, SEED_PROJECTS, generateMilestoneCommissions, SEED_COMMISSIONS } from "../constants";
 import type { Project, Commission, PlanId, ProjectStage } from "../types";
-import { HardHat, CheckCircle2, ChevronRight, Activity, Clock, AlertTriangle, AlertCircle } from "lucide-react";
+import { HardHat, CheckCircle2, ChevronRight, Activity, Clock, AlertTriangle, AlertCircle, Settings } from "lucide-react";
+import { loadPipeline, PipelineStage, getStageDisplayName } from "../services/pipelineConfig";
+import { loadSLA, calculateSLAStatus, getSLARuleForStage, getTotalPipelineDays, SLAStatus } from "../services/slaRules";
+import { getActiveCompanyId } from "../services/companyStore";
 
 const PROJECTS_KEY = "primus_projects";
 const COMMISSIONS_KEY = "primus_commissions";
-
-// SLA Target Days per stage (from previous stage completion)
-const SLA_DAYS: Record<ProjectStage, number> = {
-  SITE_SURVEY: 3,   // 3 days after project created
-  DESIGN: 7,        // 7 days after Site Survey
-  PERMITTING: 5,    // 5 days after Design
-  INSTALL: 14,      // 14 days after Permitting
-  INSPECTION: 7,    // 7 days after Install
-  PTO: 10           // 10 days after Inspection
-};
 
 interface ProjectTrackerProps {
   onRequestUpgrade: (plan: PlanId) => void;
@@ -27,15 +20,36 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
     loadOrDefault<Project[]>(PROJECTS_KEY, SEED_PROJECTS)
   );
 
+  // Load configurable pipeline stages and SLA rules
+  const companyId = getActiveCompanyId();
+  const pipelineStages = loadPipeline(companyId);
+  const slaConfig = loadSLA(companyId);
+  
+  // Get stage IDs in order for pipeline progression
+  const stageIds = pipelineStages.sort((a, b) => a.order - b.order).map(s => s.id);
+  
+  // Build SLA days lookup from config
+  const SLA_DAYS: Record<string, number> = {};
+  pipelineStages.forEach(stage => {
+    const rule = slaConfig[stage.id];
+    SLA_DAYS[stage.id] = rule?.target || 7;
+  });
+
+  // Get stage display name (from config or fallback)
+  const getStageLabel = (stageId: string): string => {
+    const stage = pipelineStages.find(s => s.id === stageId);
+    return stage?.name || STAGE_LABELS[stageId as ProjectStage] || stageId;
+  };
+
   useEffect(() => {
     save(PROJECTS_KEY, projects);
   }, [projects]);
 
-  // Helper: Get next stage
-  const getNextStage = (stage: ProjectStage): ProjectStage | null => {
-    const idx = PROJECT_STAGES.indexOf(stage);
-    if (idx === -1 || idx === PROJECT_STAGES.length - 1) return null;
-    return PROJECT_STAGES[idx + 1] as ProjectStage;
+  // Helper: Get next stage (using configurable pipeline)
+  const getNextStage = (stage: ProjectStage | string): string | null => {
+    const idx = stageIds.indexOf(stage);
+    if (idx === -1 || idx === stageIds.length - 1) return null;
+    return stageIds[idx + 1];
   };
 
   // Helper: Add days to a date string
@@ -52,18 +66,17 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
     return Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  // Compute SLA status for a project
-  const computeSLAStatus = (project: Project): 'onTrack' | 'atRisk' | 'late' => {
+  // Compute SLA status for a project (using configurable thresholds)
+  const computeSLAStatus = (project: Project): SLAStatus => {
     const today = new Date().toISOString().slice(0, 10);
     const targetDate = project.targetDates?.[project.stage];
     
     if (!targetDate) return 'onTrack';
     
-    const daysUntilTarget = getDaysBetween(today, targetDate);
+    const daysInStage = getDaysBetween(project.actualDates?.[project.stage] || project.createdAt, today);
     
-    if (daysUntilTarget < 0) return 'late';        // Past target date
-    if (daysUntilTarget <= 2) return 'atRisk';     // Within 2 days of target
-    return 'onTrack';
+    // Use configurable SLA rules
+    return calculateSLAStatus(project.stage, daysInStage, companyId);
   };
 
   // Initialize SLA tracking for a project if not present
@@ -81,23 +94,23 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
     
     let lastDate = baseDate;
     
-    for (const stage of PROJECT_STAGES) {
-      targetDates[stage] = addDays(lastDate, SLA_DAYS[stage as ProjectStage]);
+    for (const stageId of stageIds) {
+      targetDates[stageId] = addDays(lastDate, SLA_DAYS[stageId] || 7);
       
       // If stage is already completed, mark actual date
-      const stageIdx = PROJECT_STAGES.indexOf(stage);
-      const currentIdx = PROJECT_STAGES.indexOf(project.stage);
+      const stageIdx = stageIds.indexOf(stageId);
+      const currentIdx = stageIds.indexOf(project.stage);
       
       if (stageIdx < currentIdx) {
         // Already passed this stage - estimate actual date
-        actualDates[stage] = targetDates[stage];
-        lastDate = actualDates[stage];
+        actualDates[stageId] = targetDates[stageId];
+        lastDate = actualDates[stageId];
       } else if (stageIdx === currentIdx) {
         // Current stage - no actual date yet
-        lastDate = targetDates[stage];
+        lastDate = targetDates[stageId];
       } else {
         // Future stage - calculate from previous target
-        lastDate = targetDates[stage];
+        lastDate = targetDates[stageId];
       }
     }
 
@@ -124,11 +137,11 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
     const targetDates = { ...(project.targetDates || {}) };
     let lastDate = today;
     
-    const currentIdx = PROJECT_STAGES.indexOf(project.stage);
-    for (let i = currentIdx + 1; i < PROJECT_STAGES.length; i++) {
-      const stage = PROJECT_STAGES[i] as ProjectStage;
-      targetDates[stage] = addDays(lastDate, SLA_DAYS[stage]);
-      lastDate = targetDates[stage];
+    const currentIdx = stageIds.indexOf(project.stage);
+    for (let i = currentIdx + 1; i < stageIds.length; i++) {
+      const stageId = stageIds[i];
+      targetDates[stageId] = addDays(lastDate, SLA_DAYS[stageId] || 7);
+      lastDate = targetDates[stageId];
     }
 
     const updated: Project = {
@@ -155,8 +168,8 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
   }, []);
 
   const advanceStage = (p: Project) => {
-    const idx = PROJECT_STAGES.indexOf(p.stage);
-    if (idx === -1 || idx === PROJECT_STAGES.length - 1) return;
+    const idx = stageIds.indexOf(p.stage);
+    if (idx === -1 || idx === stageIds.length - 1) return;
     
     const updated = updateProjectStage(p);
 
@@ -165,8 +178,9 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
     );
     setProjects(newProjects);
 
-    // When we reach PTO, generate milestone commissions if not already in store
-    if (updated.stage === "PTO") {
+    // Check if final stage (PTO or custom final stage)
+    const finalStageId = stageIds[stageIds.length - 1];
+    if (updated.stage === finalStageId || updated.stage === "PTO") {
       const existingCommissions = loadOrDefault<Commission[]>(COMMISSIONS_KEY, SEED_COMMISSIONS);
       const hasPto = existingCommissions.some(c => c.leadId === p.leadId && c.milestone === "PTO");
       
@@ -183,23 +197,22 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
   
   // Average days from Close (creation) to Install
   const avgDays = (() => {
+    // Find install stage (or 4th stage as fallback)
+    const installStageId = stageIds.find(id => id === 'INSTALL' || id.toLowerCase().includes('install')) || stageIds[Math.min(3, stageIds.length - 1)];
+    const installIdx = stageIds.indexOf(installStageId);
+    
     const projectsWithInstall = projects.filter(p => {
-      const installIdx = PROJECT_STAGES.indexOf('INSTALL');
-      const currentIdx = PROJECT_STAGES.indexOf(p.stage);
-      return currentIdx >= installIdx && p.actualDates?.['INSTALL'];
+      const currentIdx = stageIds.indexOf(p.stage);
+      return currentIdx >= installIdx && p.actualDates?.[installStageId];
     });
     
     if (projectsWithInstall.length === 0) {
-      // Estimate based on target dates
-      const firstProject = projects[0];
-      if (firstProject?.targetDates?.['INSTALL']) {
-        return getDaysBetween(firstProject.createdAt, firstProject.targetDates['INSTALL']);
-      }
-      return SLA_DAYS.SITE_SURVEY + SLA_DAYS.DESIGN + SLA_DAYS.PERMITTING + SLA_DAYS.INSTALL;
+      // Use total pipeline days from config
+      return getTotalPipelineDays(companyId);
     }
     
     const totalDays = projectsWithInstall.reduce((sum, p) => {
-      const installDate = p.actualDates?.['INSTALL'] || p.targetDates?.['INSTALL'] || '';
+      const installDate = p.actualDates?.[installStageId] || p.targetDates?.[installStageId] || '';
       return sum + getDaysBetween(p.createdAt, installDate);
     }, 0);
     
@@ -302,9 +315,9 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
                    <button
                     className="secondary-btn text-xs"
                     onClick={() => advanceStage(p)}
-                    disabled={p.stage === "PTO"}
+                    disabled={stageIds.indexOf(p.stage) === stageIds.length - 1}
                   >
-                    {p.stage === "PTO" ? (
+                    {stageIds.indexOf(p.stage) === stageIds.length - 1 ? (
                         <>
                             <CheckCircle2 size={14} className="text-emerald-500" />
                             Complete
@@ -326,30 +339,35 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
                   <div 
                     className="absolute top-1/2 left-0 h-1 bg-emerald-500/50 -translate-y-1/2 rounded-full z-0 transition-all duration-500"
                     style={{ 
-                        width: `${(PROJECT_STAGES.indexOf(p.stage) / (PROJECT_STAGES.length - 1)) * 100}%` 
+                        width: `${(stageIds.indexOf(p.stage) / (stageIds.length - 1)) * 100}%` 
                     }}
                   ></div>
 
                   <div className="relative z-10 flex justify-between">
-                    {PROJECT_STAGES.map((st, idx) => {
-                      const isCompleted = PROJECT_STAGES.indexOf(st) <= PROJECT_STAGES.indexOf(p.stage);
-                      const isCurrent = st === p.stage;
+                    {stageIds.map((stageId, idx) => {
+                      const isCompleted = stageIds.indexOf(stageId) <= stageIds.indexOf(p.stage);
+                      const isCurrent = stageId === p.stage;
+                      const stageConfig = pipelineStages.find(s => s.id === stageId);
                       
                       return (
-                        <div key={st} className="flex flex-col items-center gap-2 group">
+                        <div key={stageId} className="flex flex-col items-center gap-2 group">
                           <div 
                             className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ${
                               isCompleted 
                                 ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' 
                                 : 'bg-slate-900 border-slate-700'
                             }`}
+                            style={isCompleted && stageConfig?.color ? {
+                              backgroundColor: stageConfig.color,
+                              borderColor: stageConfig.color
+                            } : undefined}
                           ></div>
                           <span 
                             className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${
                               isCurrent ? 'text-emerald-400' : isCompleted ? 'text-slate-400' : 'text-slate-600'
                             }`}
                           >
-                            {STAGE_LABELS[st]}
+                            {getStageLabel(stageId)}
                           </span>
                         </div>
                       );
