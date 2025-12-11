@@ -275,6 +275,8 @@ const SolarIntelligence: React.FC<SolarIntelligenceProps> = ({ userProfile, onRe
              className="bg-transparent text-slate-300 text-sm border-none focus:ring-0 cursor-pointer py-1 px-3 min-w-[200px]"
              value={leadId}
              onChange={(e) => setLeadId(e.target.value)}
+             title="Select lead"
+             aria-label="Select lead"
            >
              {leads.map(lead => (
                <option key={lead.id} value={lead.id}>{lead.name} - {lead.address}</option>
@@ -488,7 +490,9 @@ const SolarIntelligence: React.FC<SolarIntelligenceProps> = ({ userProfile, onRe
                                   ref={fileInputRef} 
                                   className="hidden" 
                                   accept="image/*" 
-                                  onChange={handleImageUpload} 
+                                  onChange={handleImageUpload}
+                                  title="Upload image"
+                                  aria-label="Upload roof or bill image"
                               />
                           </div>
                       ) : (
@@ -497,6 +501,8 @@ const SolarIntelligence: React.FC<SolarIntelligenceProps> = ({ userProfile, onRe
                                   <img src={selectedImage} alt="Analysis Target" className="w-full h-full object-contain" />
                                   <button 
                                     onClick={() => setSelectedImage(null)}
+                                    title="Remove image"
+                                    aria-label="Remove image"
                                     className="absolute top-2 right-2 p-1 bg-black/50 rounded-full hover:bg-black/80 text-white"
                                   >
                                       ×
@@ -558,6 +564,8 @@ const SolarIntelligence: React.FC<SolarIntelligenceProps> = ({ userProfile, onRe
                              className="flex-1 w-full bg-slate-950/50 border border-slate-800 rounded-lg p-3 text-sm text-slate-300 focus:outline-none focus:border-solar-orange resize-none mb-3"
                              value={outreach}
                              onChange={(e) => setOutreach(e.target.value)}
+                             title="Outreach message"
+                             aria-label="Outreach message draft"
                           />
                           <button 
                              onClick={copyOutreach}

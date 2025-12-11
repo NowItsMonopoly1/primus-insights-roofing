@@ -53,6 +53,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile,
         {/* Close button for mobile */}
         <button 
           onClick={() => setSidebarOpen(false)}
+          title="Close sidebar"
+          aria-label="Close sidebar"
           className="md:hidden text-slate-400 hover:text-white p-1"
         >
           <X size={20} />

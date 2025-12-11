@@ -115,6 +115,8 @@ export const UserProfileView: React.FC<UserProfileProps> = ({ profile, onUpdate 
                                 type="text" 
                                 value={formData.name}
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                title="Full name"
+                                aria-label="Full name"
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-3 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all"
                             />
                         </div>
@@ -128,6 +130,8 @@ export const UserProfileView: React.FC<UserProfileProps> = ({ profile, onUpdate 
                                 <select 
                                     value={formData.role}
                                     onChange={(e) => setFormData({...formData, role: e.target.value as any})}
+                                    title="User role"
+                                    aria-label="User role"
                                     className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-3 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all appearance-none cursor-pointer"
                                 >
                                     <option value="REP">Sales Rep</option>
@@ -145,6 +149,8 @@ export const UserProfileView: React.FC<UserProfileProps> = ({ profile, onUpdate 
                                     type="text" 
                                     value={formData.market}
                                     onChange={(e) => setFormData({...formData, market: e.target.value})}
+                                    title="Market region"
+                                    aria-label="Market region"
                                     className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-3 text-slate-200 focus:outline-none focus:border-solar-orange focus:ring-1 focus:ring-solar-orange transition-all"
                                 />
                             </div>
@@ -162,10 +168,12 @@ export const UserProfileView: React.FC<UserProfileProps> = ({ profile, onUpdate 
                                 placeholder="Paste your Google Gemini API Key to enable AI..."
                                 value={formData.apiKey || ''}
                                 onChange={(e) => setFormData({...formData, apiKey: e.target.value})}
+                                title="Gemini API Key"
+                                aria-label="Gemini API Key"
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-slate-200 text-xs font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-600"
                             />
                             <p className="text-[10px] text-slate-500 mt-1">
-                                Keys are saved locally in your browser. Get one at <a href="https://aistudiocdn.google.com" target="_blank" className="text-emerald-400 hover:underline">aistudio.google.com</a>.
+                                Keys are saved locally in your browser. Get one at <a href="https://aistudiocdn.google.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">aistudio.google.com</a>.
                             </p>
                         </div>
                     </div>

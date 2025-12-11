@@ -51,6 +51,8 @@ const LeadDetailsDrawer: React.FC<LeadDetailsDrawerProps> = ({ open, lead, onClo
           </h2>
           <button 
             onClick={onClose}
+            title="Close drawer"
+            aria-label="Close drawer"
             className="text-slate-400 hover:text-white p-1.5 hover:bg-slate-800 rounded-lg transition-colors"
           >
             <X size={20} />

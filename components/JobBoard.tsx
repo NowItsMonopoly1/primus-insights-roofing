@@ -268,6 +268,8 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
             <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
+                title="Filter by status"
+                aria-label="Filter by status"
                 className="w-full md:w-auto bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-300 py-2.5 px-3 focus:outline-none focus:border-solar-orange cursor-pointer"
             >
                 <option value="ALL">All Statuses</option>
@@ -297,6 +299,8 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value as any)}
+              title="Filter by priority"
+              aria-label="Filter by priority"
               className="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-solar-orange cursor-pointer"
             >
               <option value="all">All</option>
@@ -311,6 +315,8 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
             <select
               value={repFilter}
               onChange={(e) => setRepFilter(e.target.value)}
+              title="Filter by rep"
+              aria-label="Filter by rep"
               className="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-solar-orange cursor-pointer"
             >
               <option value="all">All Reps</option>
@@ -455,6 +461,8 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                         value={lead.assignedTo || 'Unassigned'}
                         onChange={(e) => handleAssignRep(lead.id, e.target.value)}
                         onClick={(e) => e.stopPropagation()}
+                        title="Assign rep"
+                        aria-label="Assign rep"
                         className="bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-solar-orange cursor-pointer"
                       >
                         <option value="Unassigned">Unassigned</option>
@@ -518,7 +526,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                              </div>
                          ) : null}
                          
-                         <button className="text-slate-400">
+                         <button className="text-slate-400" title="Edit lead" aria-label="Edit lead">
                              <Edit2 size={16} />
                          </button>
                     </div>
@@ -541,7 +549,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                         {editingId ? "Edit Lead" : "Add New Lead"}
                     </h3>
                     {!isRouting && (
-                        <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white transition-colors">
+                        <button onClick={() => setIsModalOpen(false)} title="Close modal" aria-label="Close modal" className="text-slate-500 hover:text-white transition-colors">
                             <X size={20} />
                         </button>
                     )}

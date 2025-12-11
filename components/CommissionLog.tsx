@@ -289,6 +289,8 @@ export const CommissionLog: React.FC<CommissionLogProps> = ({ onRequestUpgrade }
               </h2>
               <button 
                 onClick={() => setPaymentModalOpen(false)}
+                title="Close modal"
+                aria-label="Close modal"
                 className="text-slate-500 hover:text-white transition-colors"
               >
                 <X size={20} />
@@ -310,6 +312,8 @@ export const CommissionLog: React.FC<CommissionLogProps> = ({ onRequestUpgrade }
                   className="w-full bg-slate-950 border border-slate-800 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:border-emerald-500 cursor-pointer"
                   value={payoutMethod}
                   onChange={(e) => setPayoutMethod(e.target.value)}
+                  title="Payout method"
+                  aria-label="Payout method"
                 >
                   <option>ACH Transfer</option>
                   <option>Check</option>
@@ -329,6 +333,8 @@ export const CommissionLog: React.FC<CommissionLogProps> = ({ onRequestUpgrade }
                   className="w-full bg-slate-950 border border-slate-800 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:border-emerald-500"
                   value={paidDate}
                   onChange={(e) => setPaidDate(e.target.value)}
+                  title="Paid date"
+                  aria-label="Paid date"
                 />
               </div>
             </div>
