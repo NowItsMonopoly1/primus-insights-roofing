@@ -29,10 +29,17 @@ import {
   GitBranch,
   Timer,
   Sliders,
+  DollarSign,
+  Bell,
+  Download,
+  Upload as UploadIcon,
+  FileText,
+  RotateCcw,
 } from 'lucide-react';
 import PipelineEditor from './PipelineEditor';
 import SLAEditor from './SLAEditor';
 import CustomFieldsEditor from './CustomFieldsEditor';
+import CommissionRulesEditor from './CommissionRulesEditor';
 import {
   getActiveCompany,
   updateCompany,
@@ -64,7 +71,7 @@ interface Props {
   userProfile: UserProfile;
 }
 
-type TabType = 'profile' | 'teams' | 'reps' | 'installers' | 'permissions' | 'pipeline' | 'sla' | 'customFields';
+type TabType = 'profile' | 'teams' | 'reps' | 'installers' | 'permissions' | 'pipeline' | 'sla' | 'customFields' | 'commissions' | 'dataExport' | 'dataImport';
 
 export default function CompanySettings({ userProfile }: Props) {
   const [company, setCompany] = useState<Company | null>(null);
@@ -212,6 +219,9 @@ export default function CompanySettings({ userProfile }: Props) {
     { id: 'pipeline', label: 'Pipeline Stages', icon: <GitBranch size={16} /> },
     { id: 'sla', label: 'SLA Rules', icon: <Timer size={16} /> },
     { id: 'customFields', label: 'Custom Fields', icon: <Sliders size={16} /> },
+    { id: 'commissions', label: 'Commission Rules', icon: <DollarSign size={16} /> },
+    { id: 'dataExport', label: 'Export Data', icon: <Download size={16} /> },
+    { id: 'dataImport', label: 'Import Data', icon: <UploadIcon size={16} /> },
   ];
 
   return (
@@ -910,6 +920,23 @@ export default function CompanySettings({ userProfile }: Props) {
 
         {/* CUSTOM FIELDS TAB */}
         {activeTab === 'customFields' && <CustomFieldsEditor />}
+
+        {/* COMMISSION RULES TAB */}
+        {activeTab === 'commissions' && <CommissionRulesEditor />}
+
+        {/* DATA EXPORT TAB */}
+        {activeTab === 'dataExport' && (
+          <DataExportTab companyId={company?.id || ''} />
+        )}
+
+        {/* DATA IMPORT TAB */}
+        {activeTab === 'dataImport' && (
+          <DataImportTab companyId={company?.id || ''} onImportComplete={() => {
+            // Refresh company data after import
+            const refreshed = getActiveCompany();
+            if (refreshed) setCompany({ ...refreshed });
+          }} />
+        )}
       </div>
     </div>
   );
@@ -1141,6 +1168,261 @@ function InstallerForm({ installer, onSave, onCancel }: InstallerFormProps) {
           {installer ? 'Update' : 'Add'} Installer
         </button>
       </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// DATA EXPORT TAB
+// ============================================================================
+
+import { dataApi } from '../services/api';
+
+interface DataExportTabProps {
+  companyId: string;
+}
+
+function DataExportTab({ companyId }: DataExportTabProps) {
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<string | null>(null);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    setExportResult(null);
+    
+    try {
+      const response = await dataApi.exportAll();
+      if (response.success && response.data) {
+        // Create downloadable JSON file
+        const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `primus_export_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        const counts = [
+          `${response.data.leads?.length || 0} leads`,
+          `${response.data.projects?.length || 0} projects`,
+          `${response.data.commissions?.length || 0} commissions`,
+          `${response.data.reps?.length || 0} reps`,
+          `${response.data.installers?.length || 0} installers`
+        ].join(', ');
+        
+        setExportResult(`✅ Export successful: ${counts}`);
+      } else {
+        setExportResult(`❌ Export failed: ${response.error}`);
+      }
+    } catch (err) {
+      setExportResult('❌ Export failed: Unknown error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <Download className="text-emerald-400" size={24} />
+        <h3 className="text-xl font-bold text-white">Export Company Data</h3>
+      </div>
+      
+      <p className="text-slate-400 mb-6">
+        Export all your company data including leads, projects, commissions, reps, and installers 
+        as a JSON file. This can be used for backup or migration purposes.
+      </p>
+      
+      <div className="bg-slate-950 rounded-lg p-4 mb-6 border border-slate-800">
+        <h4 className="text-sm font-bold text-slate-300 mb-2">Included Data:</h4>
+        <ul className="text-sm text-slate-400 space-y-1">
+          <li>• All leads and their custom field values</li>
+          <li>• All projects with SLA tracking data</li>
+          <li>• Commission records</li>
+          <li>• Rep directory</li>
+          <li>• Installer directory</li>
+        </ul>
+      </div>
+      
+      <button
+        onClick={handleExport}
+        disabled={isExporting}
+        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-bold transition-all flex items-center gap-2"
+      >
+        {isExporting ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            Exporting...
+          </>
+        ) : (
+          <>
+            <Download size={18} />
+            Export All Data
+          </>
+        )}
+      </button>
+      
+      {exportResult && (
+        <div className={`mt-4 p-3 rounded-lg ${
+          exportResult.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+        }`}>
+          {exportResult}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// DATA IMPORT TAB
+// ============================================================================
+
+interface DataImportTabProps {
+  companyId: string;
+  onImportComplete: () => void;
+}
+
+function DataImportTab({ companyId, onImportComplete }: DataImportTabProps) {
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewData, setPreviewData] = useState<any>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setImportResult(null);
+      setPreviewData(null);
+      
+      // Read and preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target?.result as string);
+          setPreviewData(data);
+        } catch {
+          setImportResult('❌ Invalid JSON file');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!previewData) return;
+    
+    setIsImporting(true);
+    setImportResult(null);
+    
+    try {
+      const response = await dataApi.importAll(previewData);
+      if (response.success && response.data) {
+        const counts = Object.entries(response.data.imported)
+          .map(([key, count]) => `${count} ${key}`)
+          .join(', ');
+        
+        setImportResult(`✅ Import successful: ${counts}`);
+        onImportComplete();
+      } else {
+        setImportResult(`❌ Import failed: ${response.error}`);
+      }
+    } catch (err) {
+      setImportResult('❌ Import failed: Unknown error');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  return (
+    <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <UploadIcon className="text-blue-400" size={24} />
+        <h3 className="text-xl font-bold text-white">Import Company Data</h3>
+      </div>
+      
+      <p className="text-slate-400 mb-6">
+        Import data from a previously exported JSON file. This will add the imported data 
+        to your existing records (duplicates will be created).
+      </p>
+      
+      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="text-yellow-400 mt-0.5" size={18} />
+          <div>
+            <h4 className="text-sm font-bold text-yellow-400">Caution</h4>
+            <p className="text-sm text-yellow-300/80">
+              Importing data will not replace existing records. All imported items will be added as new entries.
+              Make sure you have a backup before importing.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      {/* File Input */}
+      <div className="mb-6">
+        <label 
+          className="block w-full p-8 border-2 border-dashed border-slate-700 rounded-xl hover:border-slate-600 cursor-pointer transition-colors text-center"
+        >
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <UploadIcon className="mx-auto mb-2 text-slate-500" size={32} />
+          <p className="text-slate-400">
+            {selectedFile ? selectedFile.name : 'Click to select a JSON file'}
+          </p>
+        </label>
+      </div>
+      
+      {/* Preview */}
+      {previewData && (
+        <div className="bg-slate-950 rounded-lg p-4 mb-6 border border-slate-800">
+          <h4 className="text-sm font-bold text-slate-300 mb-2">Preview:</h4>
+          <ul className="text-sm text-slate-400 space-y-1">
+            <li>• {previewData.leads?.length || 0} leads</li>
+            <li>• {previewData.projects?.length || 0} projects</li>
+            <li>• {previewData.commissions?.length || 0} commissions</li>
+            <li>• {previewData.reps?.length || 0} reps</li>
+            <li>• {previewData.installers?.length || 0} installers</li>
+          </ul>
+          {previewData.exportedAt && (
+            <p className="text-xs text-slate-500 mt-2">
+              Exported: {new Date(previewData.exportedAt).toLocaleString()}
+            </p>
+          )}
+        </div>
+      )}
+      
+      <button
+        onClick={handleImport}
+        disabled={isImporting || !previewData}
+        className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-bold transition-all flex items-center gap-2"
+      >
+        {isImporting ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            Importing...
+          </>
+        ) : (
+          <>
+            <UploadIcon size={18} />
+            Import Data
+          </>
+        )}
+      </button>
+      
+      {importResult && (
+        <div className={`mt-4 p-3 rounded-lg ${
+          importResult.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+        }`}>
+          {importResult}
+        </div>
+      )}
     </div>
   );
 }

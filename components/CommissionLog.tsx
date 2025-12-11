@@ -4,6 +4,8 @@ import { loadOrDefault, save } from "../utils/storage";
 import { SEED_COMMISSIONS, SEED_LEADS } from "../constants";
 import type { Commission, PlanId } from "../types";
 import { DollarSign, Wallet, CalendarClock, CheckCircle2, Download, Clock, BadgeCheck, X } from "lucide-react";
+import { notifyCommissionApproved, notify } from "../services/notifications";
+import { getActiveCompanyId } from "../services/companyStore";
 
 const COMMISSIONS_KEY = "primus_commissions";
 
@@ -72,15 +74,33 @@ export const CommissionLog: React.FC<CommissionLogProps> = ({ onRequestUpgrade }
     );
 
     setCommissions(updated);
+    
+    // Send payment notification
+    notifyCommissionApproved(
+      getActiveCompanyId(),
+      selectedCommission.amountUsd,
+      leadName(selectedCommission.leadId)
+    );
+    
     setPaymentModalOpen(false);
     setSelectedCommission(null);
   };
 
   // Legacy simple mark paid (keep for backward compatibility)
   const markPaid = (id: string) => {
+    const commission = commissions.find(c => c.id === id);
     setCommissions((prev) =>
       prev.map((c) => (c.id === id ? { ...c, status: "PAID" } : c))
     );
+    
+    // Send notification for legacy payment
+    if (commission) {
+      notifyCommissionApproved(
+        getActiveCompanyId(),
+        commission.amountUsd,
+        leadName(commission.leadId)
+      );
+    }
   };
 
   // Export CSV

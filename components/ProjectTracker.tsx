@@ -7,6 +7,7 @@ import { HardHat, CheckCircle2, ChevronRight, Activity, Clock, AlertTriangle, Al
 import { loadPipeline, PipelineStage, getStageDisplayName } from "../services/pipelineConfig";
 import { loadSLA, calculateSLAStatus, getSLARuleForStage, getTotalPipelineDays, SLAStatus } from "../services/slaRules";
 import { getActiveCompanyId } from "../services/companyStore";
+import { notifyProjectAtRisk, notifyProjectLate, notify } from "../services/notifications";
 
 const PROJECTS_KEY = "primus_projects";
 const COMMISSIONS_KEY = "primus_commissions";
@@ -167,6 +168,46 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
     }
   }, []);
 
+  // Monitor SLA status and send alerts for at-risk or late projects
+  useEffect(() => {
+    // Track which projects have been alerted to avoid duplicate notifications
+    const alertedKey = `primus_sla_alerted_${companyId}`;
+    const alerted: Record<string, SLAStatus> = JSON.parse(localStorage.getItem(alertedKey) || '{}');
+    
+    let updated = false;
+    projects.forEach(project => {
+      const prevStatus = alerted[project.id];
+      const currentStatus = project.slaStatus;
+      
+      // Send notification if status changed to at-risk or late
+      if (currentStatus && currentStatus !== prevStatus) {
+        if (currentStatus === 'atRisk' && prevStatus !== 'late') {
+          notifyProjectAtRisk(
+            { id: project.id, stage: getStageLabel(project.stage) },
+            companyId
+          );
+          alerted[project.id] = currentStatus;
+          updated = true;
+        } else if (currentStatus === 'late') {
+          notifyProjectLate(
+            { id: project.id, stage: getStageLabel(project.stage), daysLate: 1 },
+            companyId
+          );
+          alerted[project.id] = currentStatus;
+          updated = true;
+        } else if (currentStatus === 'onTrack' && prevStatus) {
+          // Clear alert status when back on track
+          delete alerted[project.id];
+          updated = true;
+        }
+      }
+    });
+    
+    if (updated) {
+      localStorage.setItem(alertedKey, JSON.stringify(alerted));
+    }
+  }, [projects, companyId]);
+
   const advanceStage = (p: Project) => {
     const idx = stageIds.indexOf(p.stage);
     if (idx === -1 || idx === stageIds.length - 1) return;
@@ -188,6 +229,24 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
         const newComms = generateMilestoneCommissions(updated);
         save(COMMISSIONS_KEY, [...existingCommissions, ...newComms]);
       }
+      
+      // Notify project completion
+      notify({
+        companyId,
+        type: 'project',
+        title: 'Project Completed!',
+        message: `${p.customerName} has reached ${getStageLabel(updated.stage)}. Great job!`,
+        priority: 'medium'
+      });
+    } else {
+      // Notify stage advancement
+      notify({
+        companyId,
+        type: 'project',
+        title: 'Project Stage Updated',
+        message: `${p.customerName} moved to ${getStageLabel(updated.stage)}.`,
+        priority: 'low'
+      });
     }
   };
 

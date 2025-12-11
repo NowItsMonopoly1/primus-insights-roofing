@@ -12,6 +12,7 @@ import LeadDetailsDrawer from './LeadDetailsDrawer';
 import { getLeadFields, CustomField } from '../services/customFields';
 import { getActiveCompanyId } from '../services/companyStore';
 import CustomFieldRenderer from './CustomFieldRenderer';
+import { notifyNewHighPriorityLead, notify } from '../services/notifications';
 
 const LEADS_KEY = "primus_leads";
 
@@ -201,6 +202,24 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     }
 
     setLeads([finalLead, ...leads]);
+    
+    // Send notification for high-priority leads
+    if (analysis.priority === 'high') {
+      notifyNewHighPriorityLead(
+        { id: finalLead.id, name: finalLead.name },
+        getActiveCompanyId()
+      );
+    } else {
+      // Send standard notification for new leads
+      notify({
+        companyId: getActiveCompanyId(),
+        type: 'lead',
+        title: 'New Lead Added',
+        message: `${finalLead.name} was added to your pipeline.`,
+        priority: 'low'
+      });
+    }
+    
     setIsModalOpen(false);
     setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
     setCustomFieldValues({});

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Search, Bell, Wifi, HelpCircle, Menu } from 'lucide-react';
+import { Search, Wifi, HelpCircle, Menu } from 'lucide-react';
 import { UserProfile, PlanId } from '../types';
+import NotificationCenter from './NotificationCenter';
 
 interface HeaderProps {
   title: string;
@@ -56,10 +57,8 @@ const Header: React.FC<HeaderProps> = ({ title, userProfile, onRequestUpgrade, s
 
         <div className="hidden md:block h-6 w-px bg-slate-800 mx-1"></div>
 
-        <button className="text-slate-400 hover:text-white transition-colors relative p-1" title="Notifications" aria-label="Notifications">
-          <Bell size={18} />
-          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-slate-950 bg-solar-orange transform translate-x-1/2 -translate-y-1/2"></span>
-        </button>
+        {/* Notification Center */}
+        <NotificationCenter />
         
         <button className="hidden md:block text-slate-400 hover:text-white transition-colors p-1" title="Help" aria-label="Help">
           <HelpCircle size={18} />
