@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { MOCK_LEADS } from '../constants';
 import { LeadStatus, Lead, UserProfile, PlanId } from '../types';
-import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone, Eye } from 'lucide-react';
+import { Filter, Search, MapPin, Sparkles, Battery, Plus, X, User, DollarSign, FileText, Calendar, Flame, Loader2, Lock, Edit2, ChevronRight, Phone, Eye, Zap } from 'lucide-react';
 import { loadOrDefault, save } from '../utils/storage';
 import { routeLead } from '../services/geminiService';
 import { hasAccess } from '../utils/plan';
+import { scoreLead, getScoreColor } from '../services/leadIntelligence';
 import LeadDetailsDrawer from './LeadDetailsDrawer';
 
 const LEADS_KEY = "primus_leads";
@@ -46,6 +47,11 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     notes: ''
   });
 
+  // AI Score Preview State (for modal)
+  const [previewAiScore, setPreviewAiScore] = useState<number | null>(null);
+  const [previewAiTags, setPreviewAiTags] = useState<string[]>([]);
+  const [previewPriority, setPreviewPriority] = useState<'low' | 'medium' | 'high' | null>(null);
+
   // Sync with LocalStorage
   useEffect(() => {
     save(LEADS_KEY, leads);
@@ -54,7 +60,23 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
   const handleOpenCreate = () => {
       setEditingId(null);
       setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+      setPreviewAiScore(null);
+      setPreviewAiTags([]);
+      setPreviewPriority(null);
       setIsModalOpen(true);
+  };
+
+  const runIntelligence = () => {
+      const analysis = scoreLead({
+          name: formData.name,
+          address: formData.address,
+          estimatedBill: Number(formData.estimatedBill) || 0,
+          age: formData.age ? Number(formData.age) : undefined,
+          notes: formData.notes
+      });
+      setPreviewAiScore(analysis.score);
+      setPreviewAiTags(analysis.tags);
+      setPreviewPriority(analysis.priority);
   };
 
   const openLeadDetails = (lead: Lead) => {
@@ -72,6 +94,10 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
           age: lead.age?.toString() || '',
           notes: lead.notes || ''
       });
+      // Populate existing AI scores if available
+      setPreviewAiScore(lead.aiScore ?? null);
+      setPreviewAiTags(lead.aiTags ?? []);
+      setPreviewPriority(lead.priority ?? null);
       setIsModalOpen(true);
   };
 
@@ -80,22 +106,43 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     
     // UPDATE EXISTING LEAD
     if (editingId) {
-        setLeads(prev => prev.map(l => l.id === editingId ? {
-            ...l,
+        const updatedLeadData = {
             name: formData.name,
             address: formData.address,
             estimatedBill: Number(formData.estimatedBill) || 0,
             age: formData.age ? Number(formData.age) : undefined,
             notes: formData.notes
+        };
+        // Re-run AI scoring on edit
+        const updatedAnalysis = scoreLead(updatedLeadData);
+        
+        setLeads(prev => prev.map(l => l.id === editingId ? {
+            ...l,
+            ...updatedLeadData,
+            aiScore: updatedAnalysis.score,
+            aiTags: updatedAnalysis.tags,
+            priority: updatedAnalysis.priority
         } : l));
         
         setIsModalOpen(false);
         setEditingId(null);
         setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+        setPreviewAiScore(null);
+        setPreviewAiTags([]);
+        setPreviewPriority(null);
         return;
     }
 
     // CREATE NEW LEAD
+    // Generate AI score for new lead
+    const analysis = scoreLead({
+        name: formData.name,
+        address: formData.address,
+        estimatedBill: Number(formData.estimatedBill) || 0,
+        age: formData.age ? Number(formData.age) : undefined,
+        notes: formData.notes
+    });
+
     const baseLead: Lead = {
       id: `L-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
       name: formData.name,
@@ -104,7 +151,10 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
       age: formData.age ? Number(formData.age) : undefined,
       notes: formData.notes,
       status: "NEW",
-      createdAt: new Date().toISOString().slice(0, 10)
+      createdAt: new Date().toISOString().slice(0, 10),
+      aiScore: analysis.score,
+      aiTags: analysis.tags,
+      priority: analysis.priority
     };
 
     let finalLead = baseLead;
@@ -120,6 +170,9 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     setLeads([finalLead, ...leads]);
     setIsModalOpen(false);
     setFormData({ name: '', address: '', estimatedBill: '', age: '', notes: '' });
+    setPreviewAiScore(null);
+    setPreviewAiTags([]);
+    setPreviewPriority(null);
   };
 
   const filteredLeads = leads.filter((lead) => {
@@ -215,7 +268,32 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {lead.routing ? (
+                      {/* AI Score Display */}
+                      {lead.aiScore !== undefined ? (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`flex items-center gap-1 text-sm font-bold ${getScoreColor(lead.aiScore)}`}>
+                              <Zap size={12} />
+                              {lead.aiScore}
+                            </span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium uppercase
+                              ${lead.priority === 'high' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                                lead.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                'bg-slate-500/20 text-slate-400 border-slate-500/30'}`}>
+                              {lead.priority || 'low'}
+                            </span>
+                          </div>
+                          {lead.aiTags && lead.aiTags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {lead.aiTags.slice(0, 2).map((tag, i) => (
+                                <span key={i} className="text-[9px] px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded border border-slate-700">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : lead.routing ? (
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             <span className={`flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded
@@ -242,7 +320,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                             <span>Upgrade to Empire</span>
                         </div>
                       ) : (
-                        <span className="text-slate-600 text-xs italic">Pending Analysis...</span>
+                        <span className="text-slate-600 text-xs italic">No AI Score</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -301,11 +379,15 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                             <span className="font-mono font-bold text-slate-300 text-sm">${lead.estimatedBill}/mo</span>
                          </div>
                          
-                         {lead.routing?.quality === 'HOT' && (
+                         {lead.aiScore !== undefined ? (
+                             <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold ${getScoreColor(lead.aiScore)} bg-slate-800 border border-slate-700`}>
+                                 <Zap size={10} /> AI: {lead.aiScore}
+                             </div>
+                         ) : lead.routing?.quality === 'HOT' ? (
                              <div className="flex items-center gap-1 px-2 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded text-solar-orange text-xs font-bold">
                                  <Flame size={10} fill="currentColor" /> HOT LEAD
                              </div>
-                         )}
+                         ) : null}
                          
                          <button className="text-slate-400">
                              <Edit2 size={16} />
@@ -418,6 +500,55 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
                                 onChange={e => setFormData({...formData, notes: e.target.value})}
                             />
                         </div>
+                    </div>
+
+                    {/* Run Intelligence Button & Preview */}
+                    <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Zap size={16} className="text-emerald-400" />
+                                <span className="text-sm font-bold text-slate-300">AI Lead Intelligence</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={runIntelligence}
+                                disabled={isRouting || !formData.name}
+                                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                            >
+                                <Sparkles size={12} />
+                                Run Intelligence
+                            </button>
+                        </div>
+                        
+                        {previewAiScore !== null && (
+                            <div className="pt-3 border-t border-slate-700 space-y-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-slate-400">Score:</span>
+                                        <span className={`text-lg font-bold ${getScoreColor(previewAiScore)}`}>
+                                            {previewAiScore}
+                                        </span>
+                                    </div>
+                                    {previewPriority && (
+                                        <span className={`text-[10px] px-2 py-0.5 rounded border font-bold uppercase
+                                            ${previewPriority === 'high' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                                              previewPriority === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                              'bg-slate-500/20 text-slate-400 border-slate-500/30'}`}>
+                                            {previewPriority} priority
+                                        </span>
+                                    )}
+                                </div>
+                                {previewAiTags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                        {previewAiTags.map((tag, i) => (
+                                            <span key={i} className="text-[10px] px-2 py-0.5 bg-slate-900 text-slate-300 rounded border border-slate-600">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                     
                     {!canUseRouter && !editingId && (

@@ -25,6 +25,10 @@ export interface Lead {
   age?: number;
   createdAt: string;
   routing?: LeadRouting; // New field for AI Router data
+  // AI Lead Intelligence fields
+  aiScore?: number;
+  aiTags?: string[];
+  priority?: 'low' | 'medium' | 'high';
 }
 
 export type ProjectStage =

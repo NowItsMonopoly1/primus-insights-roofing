@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, User, MapPin, DollarSign, Calendar, FileText, Flame, Tag, Brain } from 'lucide-react';
+import { X, User, MapPin, DollarSign, Calendar, FileText, Flame, Tag, Brain, Zap } from 'lucide-react';
 import { Lead } from '../types';
+import { getScoreColor, getPriorityColor } from '../services/leadIntelligence';
 
 interface LeadDetailsDrawerProps {
   open: boolean;
@@ -143,57 +144,114 @@ const LeadDetailsDrawer: React.FC<LeadDetailsDrawerProps> = ({ open, lead, onClo
           </div>
 
           {/* AI Insights Section (Future-Proofed) */}
-          {lead.routing && (
+          {(lead.aiScore !== undefined || lead.routing) && (
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
                 <Brain size={14} />
-                AI Insights
+                AI Intelligence
               </h4>
               
-              {/* AI Score */}
-              <div className="glass-panel p-4 rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-400">Lead Score</span>
-                  <span className="text-lg font-mono font-bold text-solar-orange">{lead.routing.score}/100</span>
+              {/* New AI Score from leadIntelligence */}
+              {lead.aiScore !== undefined && (
+                <div className="glass-panel p-4 rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Zap size={14} className="text-emerald-400" />
+                      <span className="text-xs font-bold text-slate-400">Lead IQ Score</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xl font-mono font-bold ${getScoreColor(lead.aiScore)}`}>{lead.aiScore}</span>
+                      {lead.priority && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded border font-bold uppercase ${getPriorityColor(lead.priority)}`}>
+                          {lead.priority}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        lead.aiScore >= 75 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' :
+                        lead.aiScore >= 50 ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' :
+                        'bg-gradient-to-r from-red-500 to-red-400'
+                      }`}
+                      style={{ width: `${lead.aiScore}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-solar-orange to-red-500 rounded-full transition-all duration-500"
-                    style={{ width: `${lead.routing.score}%` }}
-                  />
-                </div>
-                {lead.routing.reasoning && (
-                  <p className="text-xs text-slate-500 mt-2">{lead.routing.reasoning}</p>
-                )}
-              </div>
+              )}
 
-              {/* Recommended Agent */}
-              {lead.routing.recommendedAgentType && (
+              {/* AI Tags */}
+              {lead.aiTags && lead.aiTags.length > 0 && (
                 <div className="glass-panel p-4 rounded-xl border border-slate-800">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-purple-500/10 rounded-lg">
-                      <User size={16} className="text-purple-400" />
+                    <div className="p-2 bg-slate-800 rounded-lg">
+                      <Tag size={16} className="text-emerald-400" />
                     </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Recommended Agent</p>
-                      <p className="text-purple-400 font-medium mt-0.5">{lead.routing.recommendedAgentType}</p>
+                    <div className="flex-1">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">AI Tags</p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {lead.aiTags.map((tag, i) => (
+                          <span key={i} className="text-xs px-2 py-1 bg-slate-800 text-slate-300 rounded-full border border-slate-700">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* AI Tags Placeholder */}
-              <div className="glass-panel p-4 rounded-xl border border-slate-800 border-dashed opacity-50">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-slate-800 rounded-lg">
-                    <Tag size={16} className="text-slate-500" />
+              {/* Legacy AI Routing Score (if available) */}
+              {lead.routing && (
+                <>
+                  <div className="glass-panel p-4 rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-slate-400">Routing Score</span>
+                      <span className="text-lg font-mono font-bold text-solar-orange">{lead.routing.score}/100</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-solar-orange to-red-500 rounded-full transition-all duration-500"
+                        style={{ width: `${lead.routing.score}%` }}
+                      />
+                    </div>
+                    {lead.routing.reasoning && (
+                      <p className="text-xs text-slate-500 mt-2">{lead.routing.reasoning}</p>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">AI Tags</p>
-                    <p className="text-slate-600 text-xs mt-0.5">Coming soon...</p>
+
+                  {/* Recommended Agent */}
+                  {lead.routing.recommendedAgentType && (
+                    <div className="glass-panel p-4 rounded-xl border border-slate-800">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-purple-500/10 rounded-lg">
+                          <User size={16} className="text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Recommended Agent</p>
+                          <p className="text-purple-400 font-medium mt-0.5">{lead.routing.recommendedAgentType}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* No AI Data Placeholder */}
+              {!lead.aiScore && !lead.routing && (
+                <div className="glass-panel p-4 rounded-xl border border-slate-800 border-dashed opacity-50">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-slate-800 rounded-lg">
+                      <Zap size={16} className="text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">AI Intelligence</p>
+                      <p className="text-slate-600 text-xs mt-0.5">No AI analysis yet. Edit this lead to run intelligence.</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
