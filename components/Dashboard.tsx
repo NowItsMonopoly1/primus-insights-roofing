@@ -9,6 +9,7 @@ import { generateBusinessInsights } from '../services/geminiService';
 import { hasAccess } from '../utils/plan';
 import RevenueForecast from './RevenueForecast';
 import InstallerIntelligence from './InstallerIntelligence';
+import CompanyHealthScore from './CompanyHealthScore';
 
 const LEADS_KEY = "primus_leads";
 const PROJECTS_KEY = "primus_projects";
@@ -224,6 +225,37 @@ const Dashboard: React.FC<DashboardProps> = ({ onRequestUpgrade }) => {
             <button className="text-sm bg-solar-orange text-slate-900 font-bold px-4 py-2 rounded-lg hover:bg-orange-500 transition-all shadow-lg shadow-orange-500/20">
                 + Add Lead
             </button>
+        </div>
+      </div>
+
+      {/* Company Health Score - Executive Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <CompanyHealthScore leads={leads} projects={projects} commissions={commissions} />
+        </div>
+        <div className="space-y-4">
+          {/* Quick Stats */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Quick Pulse</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-3 bg-slate-800/50 rounded-lg">
+                <p className="text-2xl font-mono font-bold text-blue-400">{leads.length}</p>
+                <p className="text-xs text-slate-500">Total Leads</p>
+              </div>
+              <div className="text-center p-3 bg-slate-800/50 rounded-lg">
+                <p className="text-2xl font-mono font-bold text-purple-400">{projects.length}</p>
+                <p className="text-xs text-slate-500">Projects</p>
+              </div>
+              <div className="text-center p-3 bg-slate-800/50 rounded-lg">
+                <p className="text-2xl font-mono font-bold text-emerald-400">${(totalCommission/1000).toFixed(1)}k</p>
+                <p className="text-xs text-slate-500">Commissions</p>
+              </div>
+              <div className="text-center p-3 bg-slate-800/50 rounded-lg">
+                <p className="text-2xl font-mono font-bold text-amber-400">{closeRate}%</p>
+                <p className="text-xs text-slate-500">Close Rate</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
