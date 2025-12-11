@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -9,7 +9,10 @@ import { CommissionLog } from './components/CommissionLog';
 import { UserProfileView } from './components/UserProfile';
 import { PricingPage } from './components/PricingPage';
 import { UpgradeModal } from './components/UpgradeModal';
+import CompanySettings from './components/CompanySettings';
 import { loadOrDefault } from './utils/storage';
+import { migrateExistingRecordsToCompany } from './utils/storage';
+import { loadCompanyState, getActiveCompanyId } from './services/companyStore';
 import { UserProfile, PlanId } from './types';
 
 const USER_PROFILE_KEY = 'primus_user_profile';
@@ -34,6 +37,13 @@ const App: React.FC = () => {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradePlan, setUpgradePlan] = useState<PlanId | null>(null);
 
+  // Initialize company store and migrate existing records
+  useEffect(() => {
+    loadCompanyState();
+    const companyId = getActiveCompanyId();
+    migrateExistingRecordsToCompany(companyId);
+  }, []);
+
   const handleProfileUpdate = (updatedProfile: UserProfile) => {
     setUserProfile(updatedProfile);
   };
@@ -52,6 +62,7 @@ const App: React.FC = () => {
         case 'commissions': return 'Commission Log';
         case 'billing': return 'Subscription & Billing';
         case 'profile': return 'User Profile';
+        case 'company': return 'Company Settings';
         default: return 'Overview';
     }
   };
@@ -65,6 +76,7 @@ const App: React.FC = () => {
       case 'commissions': return <CommissionLog onRequestUpgrade={requestUpgrade} />;
       case 'billing': return <PricingPage userProfile={userProfile} onRequestUpgrade={requestUpgrade} />;
       case 'profile': return <UserProfileView profile={userProfile} onUpdate={handleProfileUpdate} />;
+      case 'company': return <CompanySettings userProfile={userProfile} />;
       default: return null;
     }
   };

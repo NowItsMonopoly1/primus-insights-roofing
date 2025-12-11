@@ -31,6 +31,8 @@ export interface Lead {
   priority?: 'low' | 'medium' | 'high';
   // Assigned Rep
   assignedTo?: string | null;
+  // Multi-company support
+  companyId?: string;
 }
 
 export type ProjectStage =
@@ -54,6 +56,9 @@ export interface Project {
   slaStatus?: 'onTrack' | 'atRisk' | 'late';
   // Installer assignment
   installerName?: string;
+  installerId?: string;
+  // Multi-company support
+  companyId?: string;
 }
 
 export interface SolarAnalysis {
@@ -104,6 +109,8 @@ export interface Commission {
   expectedPayDate?: string;
   paidAt?: string;
   payoutMethod?: string;
+  // Multi-company support
+  companyId?: string;
 }
 
 export type PlanId = "FREE" | "PRO" | "TEAM" | "DEALER";

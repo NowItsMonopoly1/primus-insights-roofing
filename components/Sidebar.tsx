@@ -1,7 +1,9 @@
 import React from 'react';
-import { LayoutDashboard, Sun, DollarSign, Settings, Zap, Briefcase, HardHat, ChevronRight, CreditCard, ArrowUpCircle, X } from 'lucide-react';
+import { LayoutDashboard, Sun, DollarSign, Settings, Zap, Briefcase, HardHat, ChevronRight, CreditCard, ArrowUpCircle, X, Building2 } from 'lucide-react';
 import { UserProfile, PlanId } from '../types';
 import { AVATAR_OPTIONS } from '../constants';
+import CompanySwitcher from './CompanySwitcher';
+import { can } from '../services/rbac';
 
 interface SidebarProps {
   activeTab: string;
@@ -60,6 +62,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile,
           <X size={20} />
         </button>
       </div>
+
+      {/* Company Switcher */}
+      <div className="px-3 pt-4">
+        <CompanySwitcher 
+          onNavigateToSettings={() => setActiveTab('company')}
+        />
+      </div>
       
       {/* Navigation */}
       <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
@@ -105,6 +114,21 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userProfile,
            <CreditCard size={18} className={activeTab === 'billing' ? 'text-solar-orange' : 'text-slate-500 group-hover:text-slate-400'} />
            <span className="font-medium text-sm">Billing</span>
         </button>
+
+        {/* Company Settings - Admin Only */}
+        {can(userProfile.role.toLowerCase(), 'COMPANY_SETTINGS') && (
+          <button
+            onClick={() => setActiveTab('company')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+              activeTab === 'company'
+                ? 'bg-slate-900 text-white' 
+                : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
+            }`}
+          >
+             <Building2 size={18} className={activeTab === 'company' ? 'text-solar-orange' : 'text-slate-500 group-hover:text-slate-400'} />
+             <span className="font-medium text-sm">Company</span>
+          </button>
+        )}
 
         <button
           onClick={() => setActiveTab('profile')}
