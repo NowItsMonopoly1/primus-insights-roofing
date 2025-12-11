@@ -40,6 +40,10 @@ import PipelineEditor from './PipelineEditor';
 import SLAEditor from './SLAEditor';
 import CustomFieldsEditor from './CustomFieldsEditor';
 import CommissionRulesEditor from './CommissionRulesEditor';
+import AuditLogViewer from './AuditLogViewer';
+import DataImportModal from './DataImportModal';
+import DataExportModal from './DataExportModal';
+import AdminOverrideTools from './AdminOverrideTools';
 import {
   getActiveCompany,
   updateCompany,
@@ -71,7 +75,21 @@ interface Props {
   userProfile: UserProfile;
 }
 
-type TabType = 'profile' | 'teams' | 'reps' | 'installers' | 'permissions' | 'pipeline' | 'sla' | 'customFields' | 'commissions' | 'dataExport' | 'dataImport';
+type TabType =
+  | 'profile'
+  | 'teams'
+  | 'reps'
+  | 'installers'
+  | 'permissions'
+  | 'pipeline'
+  | 'sla'
+  | 'customFields'
+  | 'commissions'
+  | 'dataExport'
+  | 'dataImport'
+  | 'auditLog'
+  | 'dataTools'
+  | 'adminControls';
 
 export default function CompanySettings({ userProfile }: Props) {
   const [company, setCompany] = useState<Company | null>(null);
@@ -220,8 +238,9 @@ export default function CompanySettings({ userProfile }: Props) {
     { id: 'sla', label: 'SLA Rules', icon: <Timer size={16} /> },
     { id: 'customFields', label: 'Custom Fields', icon: <Sliders size={16} /> },
     { id: 'commissions', label: 'Commission Rules', icon: <DollarSign size={16} /> },
-    { id: 'dataExport', label: 'Export Data', icon: <Download size={16} /> },
-    { id: 'dataImport', label: 'Import Data', icon: <UploadIcon size={16} /> },
+    { id: 'auditLog', label: 'Audit Log', icon: <RotateCcw size={16} /> },
+    { id: 'dataTools', label: 'Data Tools', icon: <FileText size={16} /> },
+    { id: 'adminControls', label: 'Admin Controls', icon: <Shield size={16} /> },
   ];
 
   return (
@@ -508,8 +527,11 @@ export default function CompanySettings({ userProfile }: Props) {
                   <button
                     onClick={handleAddTeam}
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition-all"
+                    title="Add team"
+                    aria-label="Add team"
                   >
-                    <Check size={18} />
+                    <Check size={18} aria-hidden="true" />
+                    <span className="sr-only">Add team</span>
                   </button>
                   <button
                     onClick={() => {
@@ -517,8 +539,11 @@ export default function CompanySettings({ userProfile }: Props) {
                       setNewTeamName('');
                     }}
                     className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-bold transition-all"
+                    title="Cancel add team"
+                    aria-label="Cancel add team"
                   >
-                    <X size={18} />
+                    <X size={18} aria-hidden="true" />
+                    <span className="sr-only">Cancel</span>
                   </button>
                 </div>
               </div>
@@ -924,18 +949,30 @@ export default function CompanySettings({ userProfile }: Props) {
         {/* COMMISSION RULES TAB */}
         {activeTab === 'commissions' && <CommissionRulesEditor />}
 
-        {/* DATA EXPORT TAB */}
-        {activeTab === 'dataExport' && (
-          <DataExportTab companyId={company?.id || ''} />
+        {/* AUDIT LOG TAB */}
+        {activeTab === 'auditLog' && (
+          <div className="animate-fade-in">
+            <AuditLogViewer />
+          </div>
         )}
 
-        {/* DATA IMPORT TAB */}
-        {activeTab === 'dataImport' && (
-          <DataImportTab companyId={company?.id || ''} onImportComplete={() => {
-            // Refresh company data after import
-            const refreshed = getActiveCompany();
-            if (refreshed) setCompany({ ...refreshed });
-          }} />
+        {/* DATA TOOLS TAB (Import/Export) */}
+        {activeTab === 'dataTools' && (
+          <div className="flex flex-col md:flex-row gap-8 animate-fade-in">
+            <div className="flex-1">
+              <DataImportModal isOpen={true} onClose={() => {}} />
+            </div>
+            <div className="flex-1">
+              <DataExportModal isOpen={true} onClose={() => {}} />
+            </div>
+          </div>
+        )}
+
+        {/* ADMIN CONTROLS TAB */}
+        {activeTab === 'adminControls' && (
+          <div className="animate-fade-in">
+            <AdminOverrideTools />
+          </div>
         )}
       </div>
     </div>

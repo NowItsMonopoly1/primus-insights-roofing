@@ -8,6 +8,7 @@ import { loadPipeline, PipelineStage, getStageDisplayName } from "../services/pi
 import { loadSLA, calculateSLAStatus, getSLARuleForStage, getTotalPipelineDays, SLAStatus } from "../services/slaRules";
 import { getActiveCompanyId } from "../services/companyStore";
 import { notifyProjectAtRisk, notifyProjectLate, notify } from "../services/notifications";
+import { logUpdate } from "../services/auditLog";
 
 const PROJECTS_KEY = "primus_projects";
 const COMMISSIONS_KEY = "primus_commissions";
@@ -213,6 +214,12 @@ export const ProjectTracker: React.FC<ProjectTrackerProps> = ({ onRequestUpgrade
     if (idx === -1 || idx === stageIds.length - 1) return;
     
     const updated = updateProjectStage(p);
+
+    // Log stage advancement to audit trail
+    logUpdate('Project', p.id, p, updated, { 
+      previousStage: p.stage, 
+      newStage: updated.stage 
+    });
 
     const newProjects = projects.map((proj) =>
       proj.id === p.id ? updated : proj

@@ -13,6 +13,7 @@ import { getLeadFields, CustomField } from '../services/customFields';
 import { getActiveCompanyId } from '../services/companyStore';
 import CustomFieldRenderer from './CustomFieldRenderer';
 import { notifyNewHighPriorityLead, notify } from '../services/notifications';
+import { logCreate, logUpdate } from '../services/auditLog';
 
 const LEADS_KEY = "primus_leads";
 
@@ -135,6 +136,7 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     
     // UPDATE EXISTING LEAD
     if (editingId) {
+        const existingLead = leads.find(l => l.id === editingId);
         const updatedLeadData = {
             name: formData.name,
             address: formData.address,
@@ -146,13 +148,18 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
         // Re-run AI scoring on edit
         const updatedAnalysis = scoreLead(updatedLeadData);
         
-        setLeads(prev => prev.map(l => l.id === editingId ? {
-            ...l,
+        const updatedLead = {
+            ...existingLead,
             ...updatedLeadData,
             aiScore: updatedAnalysis.score,
             aiTags: updatedAnalysis.tags,
             priority: updatedAnalysis.priority
-        } : l));
+        };
+        
+        // Log the update to audit trail
+        logUpdate('Lead', editingId, existingLead, updatedLead);
+        
+        setLeads(prev => prev.map(l => l.id === editingId ? updatedLead : l));
         
         setIsModalOpen(false);
         setEditingId(null);
@@ -202,6 +209,9 @@ const LeadBoard: React.FC<LeadBoardProps> = ({ userProfile, onRequestUpgrade }) 
     }
 
     setLeads([finalLead, ...leads]);
+    
+    // Log the creation to audit trail
+    logCreate('Lead', finalLead.id, finalLead);
     
     // Send notification for high-priority leads
     if (analysis.priority === 'high') {

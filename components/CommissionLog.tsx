@@ -6,6 +6,7 @@ import type { Commission, PlanId } from "../types";
 import { DollarSign, Wallet, CalendarClock, CheckCircle2, Download, Clock, BadgeCheck, X } from "lucide-react";
 import { notifyCommissionApproved, notify } from "../services/notifications";
 import { getActiveCompanyId } from "../services/companyStore";
+import { logUpdate } from "../services/auditLog";
 
 const COMMISSIONS_KEY = "primus_commissions";
 
@@ -62,16 +63,23 @@ export const CommissionLog: React.FC<CommissionLogProps> = ({ onRequestUpgrade }
   const markCommissionPaid = () => {
     if (!selectedCommission) return;
 
+    const updatedCommission = {
+      ...selectedCommission,
+      status: "PAID" as const,
+      payoutMethod,
+      paidAt: paidDate,
+    };
+
     const updated = commissions.map((c) =>
-      c.id === selectedCommission.id
-        ? {
-            ...c,
-            status: "PAID" as const,
-            payoutMethod,
-            paidAt: paidDate,
-          }
-        : c
+      c.id === selectedCommission.id ? updatedCommission : c
     );
+
+    // Log the status change to audit trail
+    logUpdate('Commission', selectedCommission.id, selectedCommission, updatedCommission, {
+      action: 'markPaid',
+      payoutMethod,
+      paidDate
+    });
 
     setCommissions(updated);
     
@@ -89,9 +97,16 @@ export const CommissionLog: React.FC<CommissionLogProps> = ({ onRequestUpgrade }
   // Legacy simple mark paid (keep for backward compatibility)
   const markPaid = (id: string) => {
     const commission = commissions.find(c => c.id === id);
+    const updatedCommission = commission ? { ...commission, status: "PAID" as const } : null;
+    
     setCommissions((prev) =>
       prev.map((c) => (c.id === id ? { ...c, status: "PAID" } : c))
     );
+    
+    // Log to audit trail
+    if (commission && updatedCommission) {
+      logUpdate('Commission', id, commission, updatedCommission, { action: 'legacyMarkPaid' });
+    }
     
     // Send notification for legacy payment
     if (commission) {
