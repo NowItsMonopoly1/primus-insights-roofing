@@ -44,6 +44,9 @@ import AuditLogViewer from './AuditLogViewer';
 import DataImportModal from './DataImportModal';
 import DataExportModal from './DataExportModal';
 import AdminOverrideTools from './AdminOverrideTools';
+import BrandingEditor from './BrandingEditor';
+import UserDirectory from './UserDirectory';
+import InviteUserModal from './InviteUserModal';
 import {
   getActiveCompany,
   updateCompany,
@@ -89,7 +92,10 @@ type TabType =
   | 'dataImport'
   | 'auditLog'
   | 'dataTools'
-  | 'adminControls';
+  | 'adminControls'
+  | 'branding'
+  | 'userDirectory'
+  | 'invitations';
 
 export default function CompanySettings({ userProfile }: Props) {
   const [company, setCompany] = useState<Company | null>(null);
@@ -105,6 +111,7 @@ export default function CompanySettings({ userProfile }: Props) {
   const [showAddTeam, setShowAddTeam] = useState(false);
   const [showAddRep, setShowAddRep] = useState(false);
   const [showAddInstaller, setShowAddInstaller] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     const activeCompany = getActiveCompany();
@@ -238,6 +245,9 @@ export default function CompanySettings({ userProfile }: Props) {
     { id: 'sla', label: 'SLA Rules', icon: <Timer size={16} /> },
     { id: 'customFields', label: 'Custom Fields', icon: <Sliders size={16} /> },
     { id: 'commissions', label: 'Commission Rules', icon: <DollarSign size={16} /> },
+    { id: 'branding', label: 'Branding', icon: <Settings size={16} /> },
+    { id: 'userDirectory', label: 'User Directory', icon: <Users size={16} /> },
+    { id: 'invitations', label: 'Invitations', icon: <Mail size={16} /> },
     { id: 'auditLog', label: 'Audit Log', icon: <RotateCcw size={16} /> },
     { id: 'dataTools', label: 'Data Tools', icon: <FileText size={16} /> },
     { id: 'adminControls', label: 'Admin Controls', icon: <Shield size={16} /> },
@@ -948,6 +958,41 @@ export default function CompanySettings({ userProfile }: Props) {
 
         {/* COMMISSION RULES TAB */}
         {activeTab === 'commissions' && <CommissionRulesEditor />}
+
+        {/* BRANDING TAB */}
+        {activeTab === 'branding' && (
+          <div className="animate-fade-in">
+            <BrandingEditor companyId={company.id} />
+          </div>
+        )}
+
+        {/* USER DIRECTORY TAB */}
+        {activeTab === 'userDirectory' && (
+          <div className="animate-fade-in">
+            <UserDirectory companyId={company.id} />
+          </div>
+        )}
+
+        {/* INVITATIONS TAB */}
+        {activeTab === 'invitations' && showInviteModal && (
+          <InviteUserModal companyId={company.id} onClose={() => setShowInviteModal(false)} />
+        )}
+        {activeTab === 'invitations' && !showInviteModal && (
+          <div className="animate-fade-in">
+            <div className="text-center py-12">
+              <Mail size={48} className="mx-auto mb-4 text-slate-500" />
+              <h3 className="text-xl font-bold text-white mb-2">User Invitations</h3>
+              <p className="text-slate-400 mb-6">Invite new users to join your company</p>
+              <button
+                type="button"
+                onClick={() => setShowInviteModal(true)}
+                className="px-6 py-3 bg-solar-orange hover:bg-orange-500 text-white rounded-lg font-bold transition-all"
+              >
+                Manage Invitations
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* AUDIT LOG TAB */}
         {activeTab === 'auditLog' && (

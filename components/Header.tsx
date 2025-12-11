@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Wifi, HelpCircle, Menu } from 'lucide-react';
 import { UserProfile, PlanId } from '../types';
 import NotificationCenter from './NotificationCenter';
+import ModeToggle from './ModeToggle';
 
 interface HeaderProps {
   title: string;
@@ -57,9 +58,12 @@ const Header: React.FC<HeaderProps> = ({ title, userProfile, onRequestUpgrade, s
 
         <div className="hidden md:block h-6 w-px bg-slate-800 mx-1"></div>
 
+        {/* Mode Toggle (Builder/Business) */}
+        <ModeToggle userRole={userProfile.role} />
+
         {/* Notification Center */}
         <NotificationCenter />
-        
+
         <button className="hidden md:block text-slate-400 hover:text-white transition-colors p-1" title="Help" aria-label="Help">
           <HelpCircle size={18} />
         </button>

@@ -10,9 +10,11 @@ import { UserProfileView } from './components/UserProfile';
 import { PricingPage } from './components/PricingPage';
 import { UpgradeModal } from './components/UpgradeModal';
 import CompanySettings from './components/CompanySettings';
+import TenantAdminConsole from './components/TenantAdminConsole';
 import { loadOrDefault } from './utils/storage';
 import { migrateExistingRecordsToCompany } from './utils/storage';
-import { loadCompanyState, getActiveCompanyId } from './services/companyStore';
+import { loadCompanyState, getActiveCompanyId, getActiveCompany } from './services/companyStore';
+import { loadBrand, applyBrand } from './services/branding';
 import { UserProfile, PlanId } from './types';
 
 const USER_PROFILE_KEY = 'primus_user_profile';
@@ -42,6 +44,13 @@ const App: React.FC = () => {
     loadCompanyState();
     const companyId = getActiveCompanyId();
     migrateExistingRecordsToCompany(companyId);
+
+    // Apply branding
+    const company = getActiveCompany();
+    if (company) {
+      const brand = loadBrand(company.id);
+      applyBrand(brand);
+    }
   }, []);
 
   const handleProfileUpdate = (updatedProfile: UserProfile) => {
@@ -63,6 +72,7 @@ const App: React.FC = () => {
         case 'billing': return 'Subscription & Billing';
         case 'profile': return 'User Profile';
         case 'company': return 'Company Settings';
+        case 'tenant-admin': return 'Tenant Admin Console';
         default: return 'Overview';
     }
   };
@@ -77,6 +87,7 @@ const App: React.FC = () => {
       case 'billing': return <PricingPage userProfile={userProfile} onRequestUpgrade={requestUpgrade} />;
       case 'profile': return <UserProfileView profile={userProfile} onUpdate={handleProfileUpdate} />;
       case 'company': return <CompanySettings userProfile={userProfile} />;
+      case 'tenant-admin': return <TenantAdminConsole />;
       default: return null;
     }
   };
